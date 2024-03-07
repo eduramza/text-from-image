@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory
 import android.net.Uri
 import android.util.Log
 import androidx.core.content.FileProvider
+import com.google.android.datatransport.BuildConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -23,7 +24,7 @@ fun saveBitmapToFile(bitmap: Bitmap, file: File) {
 }
 
 fun getUriForFile(context: Context, file: File): Uri {
-    val uri = FileProvider.getUriForFile(context, "com.eduramza.cameratextconversor", file)
+    val uri = FileProvider.getUriForFile(context, "com.eduramza.cameratextconversor.provider", file)
     Log.d("FileProviderDebug", "Generated Uri: $uri")
     return uri
 }
