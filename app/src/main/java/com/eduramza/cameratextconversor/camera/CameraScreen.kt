@@ -24,14 +24,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cameraswitch
 import androidx.compose.material.icons.filled.Photo
 import androidx.compose.material.icons.filled.PhotoCamera
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.BottomSheetScaffoldState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -41,15 +38,20 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.canhub.cropper.CropImageContract
 import com.canhub.cropper.CropImageContractOptions
 import com.canhub.cropper.CropImageOptions
 import com.canhub.cropper.CropImageView
+import com.eduramza.cameratextconversor.R
+import com.eduramza.cameratextconversor.components.DialogWithImage
 import com.eduramza.cameratextconversor.createTempImageFile
 import com.eduramza.cameratextconversor.getUriForFile
+import com.eduramza.cameratextconversor.loadBitmap
 import com.eduramza.cameratextconversor.saveBitmapToFile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -114,11 +116,6 @@ fun CameraScreen(
         scaffoldState = scaffoldState,
         sheetPeekHeight = 0.dp,
         sheetContent = {
-//            PhotoBottomSheetContent(
-//                bitmaps = photoTaken,
-//                modifier = Modifier
-//                    .fillMaxWidth()
-//            )
             //TODO get photos from gallery
         }
     ) { paddingValues ->
@@ -146,7 +143,7 @@ fun CameraScreen(
             ) {
                 Icon(
                     imageVector = Icons.Default.Cameraswitch,
-                    contentDescription = "Switch camera"
+                    contentDescription = stringResource(id = R.string.content_description_switch_camera)
                 )
             }
 
@@ -190,26 +187,28 @@ fun CameraScreen(
                 }
             }
         }
-        if (showCropper) {
-            AlertDialog(
-                onDismissRequest = { showCropper = false },
-                title = { Text("Crop Image") },
-                confirmButton = {
-                    TextButton(onClick = {
+        if (showCropper && imageUri != null) {
+            scope.launch {
+                bitmap = loadBitmap(context, imageUri!!)
+            }
+            bitmap?.let { image ->
+                DialogWithImage(
+                    onDismissRequest = {
+                        navigateToResume(imageUri!!)
+                        showCropper = false
+                    },
+                    onConfirmation = {
                         imageUri?.let { uri ->
                             launchCropActivity(uri, cropActivityResultLauncher)
                         }
                         showCropper = false
-                    }) {
-                        Text("Crop")
-                    }
-                },
-                dismissButton = {
-                    TextButton(onClick = { showCropper = false }) {
-                        Text("Cancel")
-                    }
-                }
-            )
+                    },
+                    bitmap = image.asImageBitmap(),
+                    imageDescription = stringResource(id = R.string.content_description_image_captured),
+                    textConfirmButton = stringResource(id = R.string.crop_dialog_confirm),
+                    textDismissButton = stringResource(id = R.string.not_need_text)
+                )
+            }
         }
     }
 }

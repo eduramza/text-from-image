@@ -110,10 +110,10 @@ fun AnalyzerScreen(
                 Image(
                     bitmap = image,
                     contentDescription = "Image Captured!",
-                    contentScale = ContentScale.Crop,
+                    contentScale = ContentScale.Fit,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(280.dp)
+                        .height(320.dp)
                 )
 
                 OutlinedTextField(
@@ -123,7 +123,7 @@ fun AnalyzerScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(16.dp)
-                        .height(320.dp)
+                        .height(400.dp)
                 )
 
                 Button(

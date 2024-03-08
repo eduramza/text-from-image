@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">Camera Text Conversor</string>
+    <string name="crop_dialog_title">Gostaria de Ajustar o tamanho da imagem?</string>
+    <string name="crop_dialog_confirm">Ajustar</string>
+    <string name="not_need_text">Não precisa</string>
+    <string name="content_description_image_captured">Imagem Capturada</string>
+    <string name="content_description_switch_camera">Trocar a camera</string>
 </resources>
