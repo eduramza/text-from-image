@@ -1,15 +1,21 @@
 package com.eduramza.cameratextconversor.camera
 
+import android.app.Activity
 import android.content.Context
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Matrix
 import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture.OnImageCapturedCallback
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.ImageProxy
 import androidx.camera.view.CameraController
 import androidx.camera.view.LifecycleCameraController
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -22,18 +28,26 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cameraswitch
 import androidx.compose.material.icons.filled.Photo
 import androidx.compose.material.icons.filled.PhotoCamera
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.BottomSheetScaffoldState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.eduramza.cameratextconversor.createTempImageFile
@@ -41,6 +55,7 @@ import com.eduramza.cameratextconversor.getUriForFile
 import com.eduramza.cameratextconversor.saveBitmapToFile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import com.yalantis.ucrop.UCrop
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -82,6 +97,20 @@ fun CameraScreen(
     context: Context,
     navigateToResume: (uri: Uri) -> Unit
 ) {
+
+    var showCropper by remember { mutableStateOf(false) }
+    var imageUri by remember { mutableStateOf<Uri?>(null) }
+
+    val cropLauncher = rememberLauncherForActivityResult(contract = ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            result.data?.let { intent ->
+                val croppedImageUri = UCrop.getOutput(intent)
+                croppedImageUri?.let { navigateToResume(it) }
+            }
+        }
+        // Handle error if resultCode is not RESULT_OK
+    }
+
     BottomSheetScaffold(
         scaffoldState = scaffoldState,
         sheetPeekHeight = 0.dp,
@@ -149,8 +178,8 @@ fun CameraScreen(
                             onPhotoTaken = { bitmap ->
                                 val tempFile = createTempImageFile(context)
                                 saveBitmapToFile(bitmap, tempFile)
-                                val tempFileUri = getUriForFile(context, tempFile)
-                                navigateToResume(tempFileUri)
+                                imageUri = getUriForFile(context, tempFile)
+                                showCropper = true
                             }
                         )
                     }
@@ -162,7 +191,40 @@ fun CameraScreen(
                 }
             }
         }
+        if (showCropper){
+            AlertDialog(
+                onDismissRequest = { showCropper = false },
+                title = { Text("Crop Image") },
+                confirmButton = {
+                    TextButton(onClick = {
+                        imageUri?.let { uri ->
+                            launchUCrop(uri, cropLauncher, context)
+                        }
+                        showCropper= false
+                    }) {
+                        Text("Crop")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showCropper = false }) {
+                        Text("Cancel")
+                    }
+                }
+            )
+        }
     }
+}
+
+fun launchUCrop(sourceUri: Uri, launcher: ActivityResultLauncher<Intent>, context: Context) {
+    val destinationUri = Uri.fromFile(createTempImageFile(context, "cropped_"))
+    val uCropOptions = UCrop.Options().apply {
+        // ... customization ...
+    }
+
+    val uCropIntent = UCrop.of(sourceUri, destinationUri)
+        .withOptions(uCropOptions)
+        .getIntent(context)
+    launcher.launch(uCropIntent)
 }
 
 private fun takePhoto(

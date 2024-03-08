@@ -8,9 +8,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
-import androidx.core.view.WindowCompat
 import androidx.navigation.compose.rememberNavController
-import com.eduramza.cameratextconversor.camera.CameraScreen
 import com.eduramza.cameratextconversor.navigation.SetupNavGraph
 import com.eduramza.cameratextconversor.ui.theme.CameraTextConversorTheme
 
