@@ -1,21 +1,17 @@
 package com.eduramza.cameratextconversor.camera
 
-import android.app.Activity
 import android.content.Context
-import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Matrix
 import android.net.Uri
+import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture.OnImageCapturedCallback
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.ImageProxy
 import androidx.camera.view.CameraController
 import androidx.camera.view.LifecycleCameraController
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -45,17 +41,18 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import com.canhub.cropper.CropImageContract
+import com.canhub.cropper.CropImageContractOptions
+import com.canhub.cropper.CropImageOptions
+import com.canhub.cropper.CropImageView
 import com.eduramza.cameratextconversor.createTempImageFile
 import com.eduramza.cameratextconversor.getUriForFile
 import com.eduramza.cameratextconversor.saveBitmapToFile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import com.yalantis.ucrop.UCrop
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -100,12 +97,14 @@ fun CameraScreen(
 
     var showCropper by remember { mutableStateOf(false) }
     var imageUri by remember { mutableStateOf<Uri?>(null) }
+    var bitmap: Bitmap? by remember { mutableStateOf(null) }
 
-    val cropLauncher = rememberLauncherForActivityResult(contract = ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            result.data?.let { intent ->
-                val croppedImageUri = UCrop.getOutput(intent)
-                croppedImageUri?.let { navigateToResume(it) }
+    val cropActivityResultLauncher = rememberLauncherForActivityResult(
+        contract = CropImageContract()
+    ) { result ->
+        if (result.isSuccessful) {
+            result.uriContent?.let { uri ->
+                navigateToResume(uri)
             }
         }
         // Handle error if resultCode is not RESULT_OK
@@ -191,16 +190,16 @@ fun CameraScreen(
                 }
             }
         }
-        if (showCropper){
+        if (showCropper) {
             AlertDialog(
                 onDismissRequest = { showCropper = false },
                 title = { Text("Crop Image") },
                 confirmButton = {
                     TextButton(onClick = {
                         imageUri?.let { uri ->
-                            launchUCrop(uri, cropLauncher, context)
+                            launchCropActivity(uri, cropActivityResultLauncher)
                         }
-                        showCropper= false
+                        showCropper = false
                     }) {
                         Text("Crop")
                     }
@@ -215,16 +214,12 @@ fun CameraScreen(
     }
 }
 
-fun launchUCrop(sourceUri: Uri, launcher: ActivityResultLauncher<Intent>, context: Context) {
-    val destinationUri = Uri.fromFile(createTempImageFile(context, "cropped_"))
-    val uCropOptions = UCrop.Options().apply {
-        // ... customization ...
-    }
-
-    val uCropIntent = UCrop.of(sourceUri, destinationUri)
-        .withOptions(uCropOptions)
-        .getIntent(context)
-    launcher.launch(uCropIntent)
+fun launchCropActivity(
+    imageUri: Uri,
+    launcher: ManagedActivityResultLauncher<CropImageContractOptions, CropImageView.CropResult>
+) {
+    val cropOptions = CropImageContractOptions(imageUri, CropImageOptions())
+    launcher.launch(cropOptions)
 }
 
 private fun takePhoto(

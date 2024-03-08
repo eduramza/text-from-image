@@ -80,7 +80,7 @@ dependencies {
     implementation("com.google.mlkit:text-recognition:16.0.0")
 
     //Easy Crop
-    implementation("com.github.yalantis:ucrop:2.2.8-native")
+    implementation("com.vanniktech:android-image-cropper:4.5.0")
 
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
