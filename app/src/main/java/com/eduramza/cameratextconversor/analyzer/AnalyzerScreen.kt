@@ -1,8 +1,11 @@
 package com.eduramza.cameratextconversor.analyzer
 
+import android.content.Context
+import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
 import android.util.Log
+import android.widget.Toast
 import androidx.camera.view.CameraController
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
@@ -11,6 +14,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBackIosNew
 import androidx.compose.material3.Button
@@ -30,14 +35,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.ClipboardManager
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.eduramza.cameratextconversor.R
@@ -54,7 +61,9 @@ fun AnalyzerScreen(
     cameraController: CameraController?,
     navigateBack: () -> Unit
 ) {
+    val clipboardManager: ClipboardManager = LocalClipboardManager.current
     val context = LocalContext.current
+    val scrollState = rememberScrollState()
 
     var analyzedText by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
@@ -65,7 +74,7 @@ fun AnalyzerScreen(
         deleteTempFile(imageUri)
     }
 
-    LaunchedEffect(bitmap){
+    LaunchedEffect(bitmap) {
         bitmap?.let {
             isLoading = true
             getTextFromImage(cameraController, it) { textRecognized ->
@@ -101,11 +110,13 @@ fun AnalyzerScreen(
         },
     ) { innerPadding ->
         padding = innerPadding
-        if (isLoading){
+        if (isLoading) {
             CircularProgressIndicator()
         } else {
             Column(
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(state = scrollState)
             ) {
                 Image(
                     bitmap = image,
@@ -119,7 +130,7 @@ fun AnalyzerScreen(
                 OutlinedTextField(
                     value = analyzedText,
                     onValueChange = { analyzedText = it },
-                    label = { Text("Enter your text here") },
+                    label = { Text(text = stringResource(id = R.string.label_analyzed_text_field)) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(16.dp)
@@ -127,29 +138,57 @@ fun AnalyzerScreen(
                 )
 
                 Button(
-                    onClick = { /* Handle Sharing */ },
+                    onClick = {
+                        clipboardManager.setText(AnnotatedString(analyzedText))
+                        val text = context.getString(R.string.success_copy_info)
+                        Toast.makeText(
+                            context,
+                            text,
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    },
                     modifier = Modifier
-                        .align(Alignment.End)
+                        .fillMaxWidth()
                         .padding(16.dp)
                 ) {
-                    Text("Share Result")
+                    Text(text = stringResource(id = R.string.button_copy_clipboard))
+                }
+                Button(
+                    onClick = {
+                        shareContent(analyzedText, context)
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    Text(text = stringResource(id = R.string.button_share_content))
                 }
             }
         }
     }
 }
 
+fun shareContent(analyzedText: String, context: Context) {
+    val sendIntent = Intent().apply {
+        action = Intent.ACTION_SEND
+        putExtra(Intent.EXTRA_TEXT, analyzedText)
+        type = "text/plain"
+    }
+
+    val shareIntent = Intent.createChooser(sendIntent, "Share text using...")
+    context.startActivity(shareIntent)
+}
+
 fun getTextFromImage(
     cameraController: CameraController?,
     bitmap: Bitmap,
-    updateAnalyzedText: (String) -> Unit)
-{
+    updateAnalyzedText: (String) -> Unit
+) {
     val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
     val inputImage: InputImage = InputImage.fromBitmap(bitmap, 0)
 
     recognizer.process(inputImage)
         .addOnSuccessListener { visionText ->
-            Log.d("ImageAnalyzer", "Image analyzed with success! -> ${visionText.text}")
             updateAnalyzedText(visionText.text)
         }
         .addOnFailureListener {
