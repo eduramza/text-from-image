@@ -1,15 +1,9 @@
 package com.eduramza.cameratextconversor.camera
 
 import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.Matrix
 import android.net.Uri
-import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.camera.core.CameraSelector
-import androidx.camera.core.ImageCapture.OnImageCapturedCallback
-import androidx.camera.core.ImageCaptureException
-import androidx.camera.core.ImageProxy
 import androidx.camera.view.CameraController
 import androidx.camera.view.LifecycleCameraController
 import androidx.compose.foundation.layout.Arrangement
@@ -32,30 +26,21 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
+import androidx.lifecycle.ViewModelStoreOwner
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.canhub.cropper.CropImageContract
-import com.canhub.cropper.CropImageContractOptions
-import com.canhub.cropper.CropImageOptions
-import com.canhub.cropper.CropImageView
 import com.eduramza.cameratextconversor.R
 import com.eduramza.cameratextconversor.components.DialogWithImage
-import com.eduramza.cameratextconversor.createTempImageFile
-import com.eduramza.cameratextconversor.getUriForFile
-import com.eduramza.cameratextconversor.loadBitmap
-import com.eduramza.cameratextconversor.saveBitmapToFile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -65,6 +50,10 @@ fun CameraScreen(
     val localContext = LocalContext.current.applicationContext
     val scope = rememberCoroutineScope()
     val scaffoldState = rememberBottomSheetScaffoldState()
+    val cameraViewModel =
+        viewModel<CameraViewModel>(
+            viewModelStoreOwner = LocalContext.current as ViewModelStoreOwner
+        )
 
     val cameraController = remember {
         LifecycleCameraController(localContext).apply {
@@ -77,10 +66,10 @@ fun CameraScreen(
     }
 
     CameraScreen(
+        cameraViewModel = cameraViewModel,
         scaffoldState = scaffoldState,
         cameraController = cameraController,
         scope = scope,
-        context = localContext,
         navigateToResume = { uri ->
             navigateToResume(uri)
         }
@@ -90,16 +79,15 @@ fun CameraScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CameraScreen(
+    cameraViewModel: CameraViewModel,
     scaffoldState: BottomSheetScaffoldState,
     cameraController: LifecycleCameraController,
     scope: CoroutineScope,
-    context: Context,
     navigateToResume: (uri: Uri) -> Unit
 ) {
-
-    var showCropper by remember { mutableStateOf(false) }
-    var imageUri by remember { mutableStateOf<Uri?>(null) }
-    var bitmap: Bitmap? by remember { mutableStateOf(null) }
+    val showCropper by remember { cameraViewModel.showCropper }
+    val imageUri by remember { cameraViewModel.imageUri }
+    val bitmap by remember { cameraViewModel.bitmap }
 
     val cropActivityResultLauncher = rememberLauncherForActivityResult(
         contract = CropImageContract()
@@ -168,15 +156,8 @@ fun CameraScreen(
                 }
                 IconButton(
                     onClick = {
-                        takePhoto(
-                            controller = cameraController,
-                            context = context,
-                            onPhotoTaken = { bitmap ->
-                                val tempFile = createTempImageFile(context)
-                                saveBitmapToFile(bitmap, tempFile)
-                                imageUri = getUriForFile(context, tempFile)
-                                showCropper = true
-                            }
+                        cameraViewModel.onImageTaken(
+                            controller = cameraController
                         )
                     }
                 ) {
@@ -187,21 +168,16 @@ fun CameraScreen(
                 }
             }
         }
-        if (showCropper && imageUri != null) {
-            scope.launch {
-                bitmap = loadBitmap(context, imageUri!!)
-            }
+        if (showCropper && cameraViewModel.imageUri.value != null) {
+            cameraViewModel.onLoadBitmap()
             bitmap?.let { image ->
                 DialogWithImage(
                     onDismissRequest = {
                         navigateToResume(imageUri!!)
-                        showCropper = false
+                        cameraViewModel.dismissDialog()
                     },
                     onConfirmation = {
-                        imageUri?.let { uri ->
-                            launchCropActivity(uri, cropActivityResultLauncher)
-                        }
-                        showCropper = false
+                        cameraViewModel.launchCropActivity(cropActivityResultLauncher)
                     },
                     bitmap = image.asImageBitmap(),
                     imageDescription = stringResource(id = R.string.content_description_image_captured),
@@ -213,43 +189,3 @@ fun CameraScreen(
     }
 }
 
-fun launchCropActivity(
-    imageUri: Uri,
-    launcher: ManagedActivityResultLauncher<CropImageContractOptions, CropImageView.CropResult>
-) {
-    val cropOptions = CropImageContractOptions(imageUri, CropImageOptions())
-    launcher.launch(cropOptions)
-}
-
-private fun takePhoto(
-    controller: LifecycleCameraController,
-    onPhotoTaken: (Bitmap) -> Unit,
-    context: Context
-) {
-    controller.takePicture(
-        ContextCompat.getMainExecutor(context),
-        object : OnImageCapturedCallback() {
-            override fun onCaptureSuccess(image: ImageProxy) {
-                super.onCaptureSuccess(image)
-
-                val matrix = Matrix().apply {
-                    postRotate(image.imageInfo.rotationDegrees.toFloat())
-                }
-                val rotatedBitmap = Bitmap.createBitmap(
-                    image.toBitmap(),
-                    0,
-                    0,
-                    image.width,
-                    image.height,
-                    matrix,
-                    true
-                )
-                onPhotoTaken(rotatedBitmap)
-            }
-
-            override fun onError(exception: ImageCaptureException) {
-                super.onError(exception)
-            }
-        }
-    )
-}

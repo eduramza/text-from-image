@@ -8,6 +8,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.camera.view.CameraController
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,9 +16,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBackIosNew
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -125,6 +129,7 @@ fun AnalyzerScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(320.dp)
+                        .padding(top = padding.calculateTopPadding())
                 )
 
                 OutlinedTextField(
@@ -140,17 +145,20 @@ fun AnalyzerScreen(
                 Button(
                     onClick = {
                         clipboardManager.setText(AnnotatedString(analyzedText))
-                        val text = context.getString(R.string.success_copy_info)
-                        Toast.makeText(
-                            context,
-                            text,
-                            Toast.LENGTH_SHORT
-                        ).show()
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp)
+                        .padding(8.dp)
+                        .background(
+                            color = MaterialTheme.colorScheme.primary,
+                            shape = RoundedCornerShape(8.dp)
+                        )
                 ) {
+                    Icon(
+                        imageVector = Icons.Default.ContentCopy,
+                        contentDescription = "Copy Content",
+                        modifier = Modifier.padding(end = 16.dp)
+                    )
                     Text(text = stringResource(id = R.string.button_copy_clipboard))
                 }
                 Button(
@@ -159,8 +167,17 @@ fun AnalyzerScreen(
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp)
+                        .padding(8.dp)
+                        .background(
+                            color = MaterialTheme.colorScheme.primary,
+                            shape = RoundedCornerShape(8.dp)
+                        )
                 ) {
+                    Icon(
+                        imageVector = Icons.Default.Share,
+                        contentDescription = "Share Content",
+                        modifier = Modifier.padding(end = 16.dp)
+                    )
                     Text(text = stringResource(id = R.string.button_share_content))
                 }
             }
@@ -205,9 +222,9 @@ fun getImage(bitmap: Bitmap?): ImageBitmap {
 @Preview
 @Composable
 fun previewAnalyzerScreen() {
-//    AnalyzerScreen(
-//        bitmap = null,
-//        cameraController = null,
-//        navigateBack = { }
-//    )
+    AnalyzerScreen(
+        imageUri = Uri.parse(""),
+        cameraController = null,
+        navigateBack = { }
+    )
 }
