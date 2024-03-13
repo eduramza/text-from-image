@@ -9,4 +9,6 @@
     <string name="button_share_content">Compartilhar Texto</string>
     <string name="success_copy_info">Texto copiado!</string>
     <string name="label_analyzed_text_field">Texto capturado da imagem</string>
+    <string name="button_crop_image">Crop Image</string>
+    <string name="button_analyzer_image">Analyzer Image</string>
 </resources>

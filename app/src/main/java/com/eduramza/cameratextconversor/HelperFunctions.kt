@@ -5,8 +5,11 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.util.Log
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.res.imageResource
 import androidx.core.content.FileProvider
-import com.google.android.datatransport.BuildConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -35,6 +38,11 @@ suspend fun loadBitmap(context: Context, imageUri: Uri): Bitmap {
             BitmapFactory.decodeStream(inputStream)
         } ?: throw IOException("Failed to load bitmap from Uri")
     }
+}
+
+@Composable
+fun Bitmap?.getImageBitmapOrDefault(): ImageBitmap {
+    return this?.asImageBitmap() ?: ImageBitmap.imageResource(id = R.drawable.no_image)
 }
 
 suspend fun deleteTempFile(imageUri: Uri) {

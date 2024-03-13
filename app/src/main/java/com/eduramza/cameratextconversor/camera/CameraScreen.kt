@@ -1,6 +1,5 @@
 package com.eduramza.cameratextconversor.camera
 
-import android.content.Context
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.camera.core.CameraSelector
@@ -85,20 +84,8 @@ fun CameraScreen(
     scope: CoroutineScope,
     navigateToResume: (uri: Uri) -> Unit
 ) {
-    val showCropper by remember { cameraViewModel.showCropper }
+    val showPreview by remember { cameraViewModel.showPreview }
     val imageUri by remember { cameraViewModel.imageUri }
-    val bitmap by remember { cameraViewModel.bitmap }
-
-    val cropActivityResultLauncher = rememberLauncherForActivityResult(
-        contract = CropImageContract()
-    ) { result ->
-        if (result.isSuccessful) {
-            result.uriContent?.let { uri ->
-                navigateToResume(uri)
-            }
-        }
-        // Handle error if resultCode is not RESULT_OK
-    }
 
     BottomSheetScaffold(
         scaffoldState = scaffoldState,
@@ -168,23 +155,25 @@ fun CameraScreen(
                 }
             }
         }
-        if (showCropper && cameraViewModel.imageUri.value != null) {
-            cameraViewModel.onLoadBitmap()
-            bitmap?.let { image ->
-                DialogWithImage(
-                    onDismissRequest = {
-                        navigateToResume(imageUri!!)
-                        cameraViewModel.dismissDialog()
-                    },
-                    onConfirmation = {
-                        cameraViewModel.launchCropActivity(cropActivityResultLauncher)
-                    },
-                    bitmap = image.asImageBitmap(),
-                    imageDescription = stringResource(id = R.string.content_description_image_captured),
-                    textConfirmButton = stringResource(id = R.string.crop_dialog_confirm),
-                    textDismissButton = stringResource(id = R.string.not_need_text)
-                )
-            }
+        if (showPreview && cameraViewModel.imageUri.value != null) {
+            cameraViewModel.sentToPreview()
+            navigateToResume(imageUri!!)
+//            cameraViewModel.onLoadBitmap()
+//            bitmap?.let { image ->
+//                DialogWithImage(
+//                    onDismissRequest = {
+//
+//                        cameraViewModel.dismissDialog()
+//                    },
+//                    onConfirmation = {
+//                        cameraViewModel.launchCropActivity(cropActivityResultLauncher)
+//                    },
+//                    bitmap = image.asImageBitmap(),
+//                    imageDescription = stringResource(id = R.string.content_description_image_captured),
+//                    textConfirmButton = stringResource(id = R.string.crop_dialog_confirm),
+//                    textDismissButton = stringResource(id = R.string.not_need_text)
+//                )
+//            }
         }
     }
 }

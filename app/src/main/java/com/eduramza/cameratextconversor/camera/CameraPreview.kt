@@ -1,7 +1,5 @@
 package com.eduramza.cameratextconversor.camera
 
-import androidx.camera.core.CameraSelector
-import androidx.camera.view.CameraController
 import androidx.camera.view.LifecycleCameraController
 import androidx.camera.view.PreviewView
 import androidx.compose.runtime.Composable

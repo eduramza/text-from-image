@@ -10,6 +10,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.eduramza.cameratextconversor.analyzer.AnalyzerScreen
 import com.eduramza.cameratextconversor.camera.CameraScreen
+import com.eduramza.cameratextconversor.preview.PreviewImageScreen
 
 @Composable
 fun SetupNavGraph(
@@ -20,37 +21,46 @@ fun SetupNavGraph(
         navController = navController
     ) {
         cameraRoute(
-            navigateToResume = {
-                navController.navigate(AppScreenNavigation.Resume.resumeArgs(it))
+            navigateToPreview = {
+                navController.navigate(AppScreenNavigation.Preview.previewArgs(it))
             }
         )
-        resumeRoute(
-            navigateToCamera = {
+        previewRoute(
+            navigateToAnalyzer = {
+                navController.navigate(AppScreenNavigation.Analyzer.resumeArgs(it))
+            },
+            navigateBack = {
                 navController.popBackStack()
+            },
+        )
+
+        analyzerRoute(
+            navigateToCamera = {
+                navController.navigate(AppScreenNavigation.Camera.route)
             }
         )
     }
 }
 
 fun NavGraphBuilder.cameraRoute(
-    navigateToResume: (uri: Uri) -> Unit
+    navigateToPreview: (uri: Uri) -> Unit
 ) {
     composable(route = AppScreenNavigation.Camera.route) {
-        CameraScreen(navigateToResume)
+        CameraScreen(navigateToPreview)
     }
 
 }
 
-fun NavGraphBuilder.resumeRoute(
+fun NavGraphBuilder.analyzerRoute(
     navigateToCamera: () -> Unit
 ) {
     composable(
-        route = AppScreenNavigation.Resume.route,
-        arguments = listOf(navArgument(name = ANALYZER_NAVIGATION_KEY) {
+        route = AppScreenNavigation.Analyzer.route,
+        arguments = listOf(navArgument(name = BITMAP_NAVIGATION_KEY) {
             type = NavType.StringType
         })
     ) { backStackEntry ->
-        val imageUriString = backStackEntry.arguments?.getString(ANALYZER_NAVIGATION_KEY)
+        val imageUriString = backStackEntry.arguments?.getString(BITMAP_NAVIGATION_KEY)
 
         if (imageUriString != null) {
             val imageUri = Uri.parse(imageUriString)
@@ -59,6 +69,28 @@ fun NavGraphBuilder.resumeRoute(
                 cameraController = null,
                 navigateBack = navigateToCamera
             )
+        }
+    }
+}
+
+fun NavGraphBuilder.previewRoute(
+    navigateToAnalyzer: (uri: Uri) -> Unit,
+    navigateBack: () -> Unit,
+) {
+    composable(
+        route = AppScreenNavigation.Preview.route,
+        arguments = listOf(navArgument(name = BITMAP_NAVIGATION_KEY) {
+            type = NavType.StringType
+        })
+    ){ backStackEntry ->
+        val imageUriString = backStackEntry.arguments?.getString(BITMAP_NAVIGATION_KEY)
+
+        if (imageUriString != null){
+            val imageUri = Uri.parse(imageUriString)
+            PreviewImageScreen(
+                imageUri = imageUri,
+                navigateToAnalyzer = navigateToAnalyzer,
+                navigateBack = navigateBack)
         }
     }
 }

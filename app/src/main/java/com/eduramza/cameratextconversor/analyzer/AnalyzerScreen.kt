@@ -5,7 +5,6 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
 import android.util.Log
-import android.widget.Toast
 import androidx.camera.view.CameraController
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -19,6 +18,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBackIosNew
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Share
@@ -40,19 +40,17 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.ClipboardManager
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.eduramza.cameratextconversor.R
 import com.eduramza.cameratextconversor.deleteTempFile
+import com.eduramza.cameratextconversor.getImageBitmapOrDefault
 import com.eduramza.cameratextconversor.loadBitmap
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
@@ -91,7 +89,6 @@ fun AnalyzerScreen(
     }
 
     var padding by remember { mutableStateOf(PaddingValues()) }
-    val image = getImage(bitmap)
 
     Scaffold(
         topBar = {
@@ -104,7 +101,7 @@ fun AnalyzerScreen(
                 navigationIcon = {
                     IconButton(onClick = { navigateBack() }) {
                         Icon(
-                            imageVector = Icons.Default.ArrowBackIosNew,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",
                             tint = MaterialTheme.colorScheme.primary
                         )
@@ -123,7 +120,7 @@ fun AnalyzerScreen(
                     .verticalScroll(state = scrollState)
             ) {
                 Image(
-                    bitmap = image,
+                    bitmap = bitmap.getImageBitmapOrDefault(),
                     contentDescription = "Image Captured!",
                     contentScale = ContentScale.Fit,
                     modifier = Modifier
@@ -212,11 +209,6 @@ fun getTextFromImage(
             Log.d("ImageAnalyzer", "Failed to Analyze Image")
         }
     cameraController?.clearImageAnalysisAnalyzer()
-}
-
-@Composable
-fun getImage(bitmap: Bitmap?): ImageBitmap {
-    return bitmap?.asImageBitmap() ?: ImageBitmap.imageResource(id = R.drawable.no_image)
 }
 
 @Preview

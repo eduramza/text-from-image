@@ -68,6 +68,9 @@ dependencies {
     implementation("com.google.android.material:material:1.11.0")
     implementation("androidx.compose.material3:material3-window-size-class-android:1.2.0")
 
+    //Compose constraint layout
+    implementation("androidx.constraintlayout:constraintlayout-compose:1.0.1")
+
     //CameraX
     val camerax_version  = "1.3.1"
     implementation("androidx.camera:camera-core:${camerax_version}")

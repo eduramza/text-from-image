@@ -24,7 +24,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class CameraViewModel(private val application: Application): AndroidViewModel(application) {
-    val showCropper =  mutableStateOf(false)
+    val showPreview =  mutableStateOf(false)
     val imageUri = mutableStateOf<Uri?>(null)
     val bitmap = mutableStateOf<Bitmap?>(null)
 
@@ -35,7 +35,7 @@ class CameraViewModel(private val application: Application): AndroidViewModel(ap
                 val tempFile = createTempImageFile(application.applicationContext)
                 saveBitmapToFile(bitmap, tempFile)
                 imageUri.value = getUriForFile(application.applicationContext, tempFile)
-                showCropper.value = true
+                showPreview.value = true
             })
 
     }
@@ -53,7 +53,7 @@ class CameraViewModel(private val application: Application): AndroidViewModel(ap
     ){
         val cropOptions = CropImageContractOptions(imageUri.value, CropImageOptions())
         launcher.launch(cropOptions)
-        showCropper.value = false
+        showPreview.value = false
     }
 
     private fun takePhoto(
@@ -88,7 +88,7 @@ class CameraViewModel(private val application: Application): AndroidViewModel(ap
         )
     }
 
-    fun dismissDialog() {
-        showCropper.value = false
+    fun sentToPreview() {
+        showPreview.value = false
     }
 }
