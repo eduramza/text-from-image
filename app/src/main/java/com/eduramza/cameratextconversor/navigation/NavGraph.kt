@@ -11,6 +11,7 @@ import androidx.navigation.navArgument
 import com.eduramza.cameratextconversor.analyzer.AnalyzerScreen
 import com.eduramza.cameratextconversor.camera.CameraScreen
 import com.eduramza.cameratextconversor.preview.PreviewImageScreen
+import com.google.accompanist.insets.ProvideWindowInsets
 
 @Composable
 fun SetupNavGraph(
@@ -37,6 +38,9 @@ fun SetupNavGraph(
         analyzerRoute(
             navigateToCamera = {
                 navController.navigate(AppScreenNavigation.Camera.route)
+            },
+            navigateToPreview = {
+                navController.navigate(AppScreenNavigation.Preview.previewArgs(it))
             }
         )
     }
@@ -52,7 +56,8 @@ fun NavGraphBuilder.cameraRoute(
 }
 
 fun NavGraphBuilder.analyzerRoute(
-    navigateToCamera: () -> Unit
+    navigateToCamera: () -> Unit,
+    navigateToPreview: (uri: Uri) -> Unit
 ) {
     composable(
         route = AppScreenNavigation.Analyzer.route,
@@ -64,11 +69,13 @@ fun NavGraphBuilder.analyzerRoute(
 
         if (imageUriString != null) {
             val imageUri = Uri.parse(imageUriString)
-            AnalyzerScreen(
-                imageUri = imageUri,
-                cameraController = null,
-                navigateBack = navigateToCamera
-            )
+            ProvideWindowInsets(windowInsetsAnimationsEnabled = true) {
+                AnalyzerScreen(
+                    imageUri = imageUri,
+                    navigateToPreview = navigateToPreview,
+                    navigateToCamera = navigateToCamera
+                )
+            }
         }
     }
 }

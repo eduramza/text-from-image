@@ -5,26 +5,27 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
 import android.util.Log
-import androidx.camera.view.CameraController
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowBackIosNew
 import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Photo
+import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.Share
-import androidx.compose.material3.Button
+import androidx.compose.material3.BottomAppBar
+import androidx.compose.material3.BottomAppBarDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -40,7 +41,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.ClipboardManager
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
@@ -48,10 +48,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eduramza.cameratextconversor.R
 import com.eduramza.cameratextconversor.deleteTempFile
-import com.eduramza.cameratextconversor.getImageBitmapOrDefault
 import com.eduramza.cameratextconversor.loadBitmap
+import com.google.accompanist.insets.ProvideWindowInsets
+import com.google.accompanist.insets.navigationBarsWithImePadding
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
@@ -60,16 +62,24 @@ import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 @Composable
 fun AnalyzerScreen(
     imageUri: Uri,
-    cameraController: CameraController?,
-    navigateBack: () -> Unit
+    navigateToPreview: (uri: Uri) -> Unit,
+    navigateToCamera: () -> Unit,
 ) {
     val clipboardManager: ClipboardManager = LocalClipboardManager.current
     val context = LocalContext.current
     val scrollState = rememberScrollState()
+    var padding by remember { mutableStateOf(PaddingValues()) }
 
-    var analyzedText by remember { mutableStateOf("") }
+    val imageAnalyzerViewModel =
+        viewModel<ImageAnalyzerViewModel>()
+
+    val analyzedText by remember { imageAnalyzerViewModel.textAnalyzed }
     var isLoading by remember { mutableStateOf(false) }
     var bitmap by remember { mutableStateOf<Bitmap?>(null) }
+
+    LaunchedEffect(key1 = scrollState.maxValue) {
+        scrollState.scrollTo(scrollState.maxValue)
+    }
 
     LaunchedEffect(imageUri) { // Use LaunchedEffect to handle loading and deletion
         bitmap = loadBitmap(context, imageUri)
@@ -79,16 +89,14 @@ fun AnalyzerScreen(
     LaunchedEffect(bitmap) {
         bitmap?.let {
             isLoading = true
-            getTextFromImage(cameraController, it) { textRecognized ->
-                analyzedText = textRecognized
+            getTextFromImage(it) { textRecognized ->
+                imageAnalyzerViewModel.updateText(textRecognized)
             }
             isLoading = false
         } ?: run {
             return@LaunchedEffect
         }
     }
-
-    var padding by remember { mutableStateOf(PaddingValues()) }
 
     Scaffold(
         topBar = {
@@ -99,7 +107,7 @@ fun AnalyzerScreen(
                 ),
                 title = { Text(text = stringResource(id = R.string.app_name)) },
                 navigationIcon = {
-                    IconButton(onClick = { navigateBack() }) {
+                    IconButton(onClick = { navigateToCamera() }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",
@@ -109,77 +117,86 @@ fun AnalyzerScreen(
                 }
             )
         },
-    ) { innerPadding ->
-        padding = innerPadding
-        if (isLoading) {
-            CircularProgressIndicator()
-        } else {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(state = scrollState)
-            ) {
-                Image(
-                    bitmap = bitmap.getImageBitmapOrDefault(),
-                    contentDescription = "Image Captured!",
-                    contentScale = ContentScale.Fit,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(320.dp)
-                        .padding(top = padding.calculateTopPadding())
-                )
-
-                OutlinedTextField(
-                    value = analyzedText,
-                    onValueChange = { analyzedText = it },
-                    label = { Text(text = stringResource(id = R.string.label_analyzed_text_field)) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                        .height(400.dp)
-                )
-
-                Button(
-                    onClick = {
-                        clipboardManager.setText(AnnotatedString(analyzedText))
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(8.dp)
-                        .background(
-                            color = MaterialTheme.colorScheme.primary,
-                            shape = RoundedCornerShape(8.dp)
+        bottomBar = {
+            BottomAppBar(
+                actions = {
+                    IconButton(
+                        onClick = {
+                            clipboardManager.setText(AnnotatedString(analyzedText))
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ContentCopy,
+                            contentDescription = "Copy Content",
                         )
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.ContentCopy,
-                        contentDescription = "Copy Content",
-                        modifier = Modifier.padding(end = 16.dp)
-                    )
-                    Text(text = stringResource(id = R.string.button_copy_clipboard))
-                }
-                Button(
-                    onClick = {
-                        shareContent(analyzedText, context)
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(8.dp)
-                        .background(
-                            color = MaterialTheme.colorScheme.primary,
-                            shape = RoundedCornerShape(8.dp)
+                    }
+                    IconButton(
+                        onClick = {
+                            shareContent(analyzedText, context)
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Share,
+                            contentDescription = "Copy Content",
                         )
+                    }
+                    IconButton(
+                        onClick = {
+                            navigateToPreview(imageUri)
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Photo,
+                            contentDescription = "Preview Image",
+                        )
+                    }
+                },
+                floatingActionButton = {
+                    FloatingActionButton(
+                        onClick = { navigateToCamera() },
+                        containerColor = BottomAppBarDefaults.bottomAppBarFabColor,
+                        elevation = FloatingActionButtonDefaults.bottomAppBarFabElevation()
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.PhotoCamera,
+                            contentDescription = "Take New Photo"
+                        )
+                    }
+                },
+                contentPadding = BottomAppBarDefaults.ContentPadding
+            )
+        },
+        content = { innerPadding ->
+            padding = innerPadding
+
+            if (isLoading) {
+                CircularProgressIndicator()
+            } else {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .imePadding()
+                        .navigationBarsPadding()
+                        .padding(
+                            top = padding.calculateTopPadding(),
+                            bottom = padding.calculateBottomPadding()
+                        )
+                        .verticalScroll(state = scrollState)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Share,
-                        contentDescription = "Share Content",
-                        modifier = Modifier.padding(end = 16.dp)
+                    OutlinedTextField(
+                        value = analyzedText,
+                        onValueChange = { imageAnalyzerViewModel.updateText(it) },
+                        label = { Text(text = stringResource(id = R.string.label_analyzed_text_field)) },
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 16.dp)
+                            .defaultMinSize(minHeight = 500.dp)
                     )
-                    Text(text = stringResource(id = R.string.button_share_content))
                 }
             }
+
         }
-    }
+    )
 }
 
 fun shareContent(analyzedText: String, context: Context) {
@@ -194,7 +211,6 @@ fun shareContent(analyzedText: String, context: Context) {
 }
 
 fun getTextFromImage(
-    cameraController: CameraController?,
     bitmap: Bitmap,
     updateAnalyzedText: (String) -> Unit
 ) {
@@ -208,7 +224,6 @@ fun getTextFromImage(
         .addOnFailureListener {
             Log.d("ImageAnalyzer", "Failed to Analyze Image")
         }
-    cameraController?.clearImageAnalysisAnalyzer()
 }
 
 @Preview
@@ -216,7 +231,7 @@ fun getTextFromImage(
 fun previewAnalyzerScreen() {
     AnalyzerScreen(
         imageUri = Uri.parse(""),
-        cameraController = null,
-        navigateBack = { }
+        navigateToPreview = { },
+        navigateToCamera = { }
     )
 }

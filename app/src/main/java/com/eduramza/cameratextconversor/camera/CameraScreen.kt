@@ -1,7 +1,6 @@
 package com.eduramza.cameratextconversor.camera
 
 import android.net.Uri
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.camera.core.CameraSelector
 import androidx.camera.view.CameraController
 import androidx.camera.view.LifecycleCameraController
@@ -17,11 +16,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cameraswitch
 import androidx.compose.material.icons.filled.Photo
 import androidx.compose.material.icons.filled.PhotoCamera
-import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.BottomSheetScaffoldState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -29,15 +28,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.canhub.cropper.CropImageContract
 import com.eduramza.cameratextconversor.R
-import com.eduramza.cameratextconversor.components.DialogWithImage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -87,13 +83,7 @@ fun CameraScreen(
     val showPreview by remember { cameraViewModel.showPreview }
     val imageUri by remember { cameraViewModel.imageUri }
 
-    BottomSheetScaffold(
-        scaffoldState = scaffoldState,
-        sheetPeekHeight = 0.dp,
-        sheetContent = {
-            //TODO get photos from gallery
-        }
-    ) { paddingValues ->
+    Scaffold { paddingValues ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -158,22 +148,6 @@ fun CameraScreen(
         if (showPreview && cameraViewModel.imageUri.value != null) {
             cameraViewModel.sentToPreview()
             navigateToResume(imageUri!!)
-//            cameraViewModel.onLoadBitmap()
-//            bitmap?.let { image ->
-//                DialogWithImage(
-//                    onDismissRequest = {
-//
-//                        cameraViewModel.dismissDialog()
-//                    },
-//                    onConfirmation = {
-//                        cameraViewModel.launchCropActivity(cropActivityResultLauncher)
-//                    },
-//                    bitmap = image.asImageBitmap(),
-//                    imageDescription = stringResource(id = R.string.content_description_image_captured),
-//                    textConfirmButton = stringResource(id = R.string.crop_dialog_confirm),
-//                    textDismissButton = stringResource(id = R.string.not_need_text)
-//                )
-//            }
         }
     }
 }
