@@ -1,6 +1,8 @@
 package com.eduramza.cameratextconversor.camera
 
 import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
 import androidx.camera.view.CameraController
 import androidx.camera.view.LifecycleCameraController
@@ -83,6 +85,15 @@ fun CameraScreen(
     val showPreview by remember { cameraViewModel.showPreview }
     val imageUri by remember { cameraViewModel.imageUri }
 
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent(),
+        onResult = { uri ->
+            uri?.let {
+                cameraViewModel.setImageUriFromGallery(it)
+            }
+        }
+    )
+
     Scaffold { paddingValues ->
         Box(
             modifier = Modifier
@@ -121,9 +132,7 @@ fun CameraScreen(
             ) {
                 IconButton(
                     onClick = {
-                        scope.launch {
-                            scaffoldState.bottomSheetState.expand()
-                        }
+                        galleryLauncher.launch("image/*")
                     }
                 ) {
                     Icon(

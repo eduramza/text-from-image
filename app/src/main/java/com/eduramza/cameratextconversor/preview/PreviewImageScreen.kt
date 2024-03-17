@@ -9,8 +9,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -34,6 +36,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import com.canhub.cropper.CropImageContract
 import com.canhub.cropper.CropImageContractOptions
 import com.canhub.cropper.CropImageOptions
@@ -73,17 +76,16 @@ fun PreviewImageScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(
-                    top = padding.calculateTopPadding(),
-                    bottom = padding.calculateBottomPadding(),
-                )
+                .padding(paddingValues)
+                .consumeWindowInsets(paddingValues)
         ) {
             Image(
                 bitmap = bitmap.getImageBitmapOrDefault(),
                 contentDescription = "Image to scan",
-                contentScale = ContentScale.Crop,
+                contentScale = ContentScale.FillBounds,
                 modifier = Modifier
                     .fillMaxSize()
+                    .padding(bottom = 100.dp)
             )
             IconButton(
                 onClick = { navigateBack() },
@@ -102,28 +104,35 @@ fun PreviewImageScreen(
                     .fillMaxWidth()
                     .background(Color.White)
                     .align(Alignment.BottomCenter)
+                    .height(100.dp)
             ) {
                 TextButton(
                     onClick = {
                         launchCropActivity(imageUri, cropActivityResultLauncher)
                     },
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .background(color = MaterialTheme.colorScheme.scrim.copy(alpha = 0.5f))
+                        .fillMaxSize()
+                        .weight(1f)
+                        .background(color = MaterialTheme.colorScheme.scrim.copy(alpha = 0.35f))
                 ) {
                     Text(
                         text = stringResource(id = R.string.button_crop_image),
-                        color = MaterialTheme.colorScheme.onPrimary
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        fontSize = MaterialTheme.typography.titleLarge.fontSize
                     )
                 }
 
                 Button(
                     onClick = { navigateToAnalyzer(imageUri) },
                     modifier = Modifier
-                        .fillMaxWidth()
+                        .fillMaxSize()
+                        .weight(1f)
                         .background(color = MaterialTheme.colorScheme.primary)
                 ) {
-                    Text(text = stringResource(id = R.string.button_analyzer_image))
+                    Text(
+                        text = stringResource(id = R.string.button_analyzer_image),
+                        fontSize = MaterialTheme.typography.titleMedium.fontSize
+                    )
                 }
 
             }
