@@ -23,7 +23,10 @@ class MainActivity : ComponentActivity() {
         setContent {
             CameraTextConversorTheme(dynamicColor = false) {
                 val navController = rememberNavController()
-                SetupNavGraph(navController)
+                SetupNavGraph(
+                    activity = this,
+                    navController = navController
+                )
             }
         }
     }

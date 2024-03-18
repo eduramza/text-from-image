@@ -1,7 +1,11 @@
 package com.eduramza.cameratextconversor.camera
 
+import android.app.Activity
+import android.app.Activity.RESULT_OK
+import android.content.Context
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
 import androidx.camera.view.CameraController
@@ -16,18 +20,15 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cameraswitch
+import androidx.compose.material.icons.filled.DocumentScanner
 import androidx.compose.material.icons.filled.Photo
 import androidx.compose.material.icons.filled.PhotoCamera
-import androidx.compose.material3.BottomSheetScaffoldState
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -36,21 +37,33 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eduramza.cameratextconversor.R
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
+import com.eduramza.cameratextconversor.saveLocalPDF
+import com.google.mlkit.vision.documentscanner.GmsDocumentScannerOptions
+import com.google.mlkit.vision.documentscanner.GmsDocumentScanning
+import com.google.mlkit.vision.documentscanner.GmsDocumentScanningResult
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CameraScreen(
-    navigateToResume: (uri: Uri) -> Unit
+    activity: Activity,
+    navigateToPreview: (uri: List<Uri>) -> Unit,
+    navigateToAnalyzer: (uris: List<Uri>) -> Unit
 ) {
     val localContext = LocalContext.current.applicationContext
-    val scope = rememberCoroutineScope()
-    val scaffoldState = rememberBottomSheetScaffoldState()
     val cameraViewModel =
         viewModel<CameraViewModel>(
             viewModelStoreOwner = LocalContext.current as ViewModelStoreOwner
         )
+
+    val documentScannerOptions = GmsDocumentScannerOptions.Builder()
+        .setScannerMode(GmsDocumentScannerOptions.SCANNER_MODE_FULL)
+        .setGalleryImportAllowed(true)
+        .setPageLimit(5) //Update to more in the future
+        .setResultFormats(
+            GmsDocumentScannerOptions.RESULT_FORMAT_JPEG,
+            GmsDocumentScannerOptions.RESULT_FORMAT_PDF
+        )
+        .build()
+
 
     val cameraController = remember {
         LifecycleCameraController(localContext).apply {
@@ -64,32 +77,52 @@ fun CameraScreen(
 
     CameraScreen(
         cameraViewModel = cameraViewModel,
-        scaffoldState = scaffoldState,
         cameraController = cameraController,
-        scope = scope,
-        navigateToResume = { uri ->
-            navigateToResume(uri)
-        }
+        localContext = localContext,
+        activity = activity,
+        documentScannerOptions = documentScannerOptions,
+        navigateToPreview = { uri ->
+            navigateToPreview(uri)
+        },
+        navigateToAnalyzer = navigateToAnalyzer
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CameraScreen(
     cameraViewModel: CameraViewModel,
-    scaffoldState: BottomSheetScaffoldState,
     cameraController: LifecycleCameraController,
-    scope: CoroutineScope,
-    navigateToResume: (uri: Uri) -> Unit
+    localContext: Context,
+    activity: Activity,
+    documentScannerOptions: GmsDocumentScannerOptions,
+    navigateToPreview: (uri: List<Uri>) -> Unit,
+    navigateToAnalyzer: (uris: List<Uri>) -> Unit
 ) {
     val showPreview by remember { cameraViewModel.showPreview }
-    val imageUri by remember { cameraViewModel.imageUri }
 
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent(),
         onResult = { uri ->
             uri?.let {
                 cameraViewModel.setImageUriFromGallery(it)
+            }
+        }
+    )
+
+    val showDocumentScanned by remember { cameraViewModel.showDocumentsScanned }
+
+    val scanner = GmsDocumentScanning.getClient(documentScannerOptions)
+    val documentScannerLaunch = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartIntentSenderForResult(),
+        onResult = {
+            if (it.resultCode == RESULT_OK) {
+                val result = GmsDocumentScanningResult.fromActivityResultIntent(it.data)
+                val imageScanned = result?.pages?.map { page -> page.imageUri } ?: emptyList()
+                cameraViewModel.setUrisFromScanner(imageScanned)
+
+                result?.pdf?.let { pdf ->
+                    saveLocalPDF(localContext, pdf)
+                }
             }
         }
     )
@@ -140,6 +173,26 @@ fun CameraScreen(
                         contentDescription = "Open gallery"
                     )
                 }
+
+                IconButton(
+                    onClick = {
+                        scanner.getStartScanIntent(activity)
+                            .addOnSuccessListener {
+                                documentScannerLaunch.launch(
+                                    IntentSenderRequest.Builder(it).build()
+                                )
+                            }
+                            .addOnFailureListener {
+
+                            }
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.DocumentScanner,
+                        contentDescription = "Scan Document"
+                    )
+                }
+
                 IconButton(
                     onClick = {
                         cameraViewModel.onImageTaken(
@@ -154,9 +207,11 @@ fun CameraScreen(
                 }
             }
         }
-        if (showPreview && cameraViewModel.imageUri.value != null) {
-            cameraViewModel.sentToPreview()
-            navigateToResume(imageUri!!)
+        if (showPreview) {
+            cameraViewModel.sentToPreview(navigateToPreview)
+        }
+        if (showDocumentScanned){
+            cameraViewModel.sendToAnalyzer(navigateToAnalyzer)
         }
     }
 }

@@ -10,6 +10,6 @@ class ImageAnalyzerViewModel: ViewModel() {
         private set
 
     fun updateText(input: String){
-        textAnalyzed.value = input
+        textAnalyzed.value = textAnalyzed.value + "$input\n\n --------  ******* ----------- \n\n"
     }
 }

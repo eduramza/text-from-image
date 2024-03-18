@@ -17,7 +17,10 @@ import com.eduramza.cameratextconversor.saveBitmapToFile
 
 class CameraViewModel(private val application: Application): AndroidViewModel(application) {
     val showPreview =  mutableStateOf(false)
-    val imageUri = mutableStateOf<Uri?>(null)
+    private val imageUri = mutableStateOf<Uri?>(null)
+
+    val showDocumentsScanned = mutableStateOf(false)
+    private val scansUri = mutableStateOf<List<Uri>>(emptyList())
 
     fun onImageTaken(controller: LifecycleCameraController){
         takePhoto(
@@ -34,6 +37,11 @@ class CameraViewModel(private val application: Application): AndroidViewModel(ap
     fun setImageUriFromGallery(galleryImage: Uri){
         imageUri.value = galleryImage
         showPreview.value = true
+    }
+
+    fun setUrisFromScanner(scansResult: List<Uri>){
+        scansUri.value = scansResult
+        showDocumentsScanned.value = true
     }
 
     private fun takePhoto(
@@ -68,7 +76,17 @@ class CameraViewModel(private val application: Application): AndroidViewModel(ap
         )
     }
 
-    fun sentToPreview() {
-        showPreview.value = false
+    fun sentToPreview(navigateToPreview: (uri: List<Uri>) -> Unit) {
+        imageUri.value?.let{
+            showPreview.value = false
+            navigateToPreview(
+                listOf(it)
+            )
+        }
+    }
+
+    fun sendToAnalyzer(navigateToAnalyzer: (uris: List<Uri>) -> Unit) {
+        navigateToAnalyzer(scansUri.value)
+        showDocumentsScanned.value = false
     }
 }

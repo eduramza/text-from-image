@@ -50,10 +50,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eduramza.cameratextconversor.R
-import com.eduramza.cameratextconversor.deleteTempFile
 import com.eduramza.cameratextconversor.loadBitmap
-import com.google.accompanist.insets.ProvideWindowInsets
-import com.google.accompanist.insets.navigationBarsWithImePadding
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
@@ -61,8 +58,8 @@ import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AnalyzerScreen(
-    imageUri: Uri,
-    navigateToPreview: (uri: Uri) -> Unit,
+    imageUri: List<Uri>,
+    navigateToPreview: (uri: List<Uri>) -> Unit,
     navigateToCamera: () -> Unit,
 ) {
     val clipboardManager: ClipboardManager = LocalClipboardManager.current
@@ -75,27 +72,27 @@ fun AnalyzerScreen(
 
     val analyzedText by remember { imageAnalyzerViewModel.textAnalyzed }
     var isLoading by remember { mutableStateOf(false) }
-    var bitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var bitmapList by remember { mutableStateOf<List<Bitmap>>(emptyList()) }
 
     LaunchedEffect(key1 = scrollState.maxValue) {
         scrollState.scrollTo(scrollState.maxValue)
     }
 
     LaunchedEffect(imageUri) { // Use LaunchedEffect to handle loading and deletion
-        bitmap = loadBitmap(context, imageUri)
-        deleteTempFile(imageUri)
+        bitmapList = imageUri.map { uri ->
+            loadBitmap(context, uri)
+        }
     }
 
-    LaunchedEffect(bitmap) {
-        bitmap?.let {
-            isLoading = true
-            getTextFromImage(it) { textRecognized ->
+    LaunchedEffect(bitmapList) {
+        isLoading = true
+        bitmapList.forEach { bitmap ->
+            getTextFromImage(bitmap) { textRecognized ->
                 imageAnalyzerViewModel.updateText(textRecognized)
             }
-            isLoading = false
-        } ?: run {
-            return@LaunchedEffect
         }
+
+        isLoading = false
     }
 
     Scaffold(
@@ -230,7 +227,7 @@ fun getTextFromImage(
 @Composable
 fun previewAnalyzerScreen() {
     AnalyzerScreen(
-        imageUri = Uri.parse(""),
+        imageUri = listOf(Uri.parse("")),
         navigateToPreview = { },
         navigateToCamera = { }
     )

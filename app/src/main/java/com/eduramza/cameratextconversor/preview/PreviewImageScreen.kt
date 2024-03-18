@@ -4,7 +4,6 @@ import android.graphics.Bitmap
 import android.net.Uri
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -37,27 +36,29 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 import com.canhub.cropper.CropImageContract
 import com.canhub.cropper.CropImageContractOptions
 import com.canhub.cropper.CropImageOptions
 import com.canhub.cropper.CropImageView
 import com.eduramza.cameratextconversor.R
-import com.eduramza.cameratextconversor.getImageBitmapOrDefault
 import com.eduramza.cameratextconversor.loadBitmap
 
 @Composable
 fun PreviewImageScreen(
-    imageUri: Uri,
+    imageUri: List<Uri>,
     navigateBack: () -> Unit,
-    navigateToAnalyzer: (uri: Uri) -> Unit
+    navigateToAnalyzer: (uri: List<Uri>) -> Unit
 ) {
 
     val context = LocalContext.current
-    var bitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var bitmap by remember { mutableStateOf<List<Bitmap>>(emptyList()) }
     var padding by remember { mutableStateOf(PaddingValues()) }
 
     LaunchedEffect(imageUri) { // Use LaunchedEffect to handle loading and deletion
-        bitmap = loadBitmap(context, imageUri)
+        bitmap = imageUri.map {
+            loadBitmap(context, it)
+        }
     }
 
     val cropActivityResultLauncher = rememberLauncherForActivityResult(
@@ -65,7 +66,7 @@ fun PreviewImageScreen(
     ) { result ->
         if (result.isSuccessful) {
             result.uriContent?.let { uri ->
-                navigateToAnalyzer(uri)
+                navigateToAnalyzer(imageUri)
             }
         }
         // Handle error if resultCode is not RESULT_OK
@@ -79,14 +80,14 @@ fun PreviewImageScreen(
                 .padding(paddingValues)
                 .consumeWindowInsets(paddingValues)
         ) {
-            Image(
-                bitmap = bitmap.getImageBitmapOrDefault(),
-                contentDescription = "Image to scan",
-                contentScale = ContentScale.FillBounds,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(bottom = 100.dp)
-            )
+            imageUri.forEach { uri ->
+                AsyncImage(
+                    model = uri,
+                    contentDescription = null,
+                    contentScale = ContentScale.FillWidth,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
             IconButton(
                 onClick = { navigateBack() },
                 modifier = Modifier
@@ -106,21 +107,23 @@ fun PreviewImageScreen(
                     .align(Alignment.BottomCenter)
                     .height(100.dp)
             ) {
-                TextButton(
-                    onClick = {
-                        launchCropActivity(imageUri, cropActivityResultLauncher)
-                    },
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .weight(1f)
-                        .background(color = MaterialTheme.colorScheme.scrim.copy(alpha = 0.35f))
-                ) {
-                    Text(
-                        text = stringResource(id = R.string.button_crop_image),
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        fontSize = MaterialTheme.typography.titleLarge.fontSize
-                    )
-                }
+                if (imageUri.size == 1){
+                    TextButton(
+                        onClick = {
+                            launchCropActivity(imageUri.first(), cropActivityResultLauncher)
+                        },
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .weight(1f)
+                            .background(color = MaterialTheme.colorScheme.scrim.copy(alpha = 0.35f))
+                    ) {
+                        Text(
+                            text = stringResource(id = R.string.button_crop_image),
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            fontSize = MaterialTheme.typography.titleLarge.fontSize
+                        )
+                    }
+            }
 
                 Button(
                     onClick = { navigateToAnalyzer(imageUri) },
@@ -152,8 +155,7 @@ fun launchCropActivity(
 @Composable
 fun previewEditImageScreen() {
     PreviewImageScreen(
-        imageUri = Uri.parse(""),
-        navigateBack = {},
-        navigateToAnalyzer = {}
-    )
+        imageUri = listOf(Uri.parse("")),
+        navigateBack = {}
+    ) {}
 }

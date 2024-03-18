@@ -1,5 +1,6 @@
 package com.eduramza.cameratextconversor.navigation
 
+import android.app.Activity
 import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavGraphBuilder
@@ -15,6 +16,7 @@ import com.google.accompanist.insets.ProvideWindowInsets
 
 @Composable
 fun SetupNavGraph(
+    activity: Activity,
     navController: NavHostController
 ) {
     NavHost(
@@ -22,8 +24,12 @@ fun SetupNavGraph(
         navController = navController
     ) {
         cameraRoute(
+            activity = activity,
             navigateToPreview = {
                 navController.navigate(AppScreenNavigation.Preview.previewArgs(it))
+            },
+            navigateToAnalyzer = {
+                navController.navigate(AppScreenNavigation.Analyzer.resumeArgs(it))
             }
         )
         previewRoute(
@@ -47,17 +53,22 @@ fun SetupNavGraph(
 }
 
 fun NavGraphBuilder.cameraRoute(
-    navigateToPreview: (uri: Uri) -> Unit
+    activity: Activity,
+    navigateToPreview: (uri: List<Uri>) -> Unit,
+    navigateToAnalyzer: (uri: List<Uri>) -> Unit
 ) {
     composable(route = AppScreenNavigation.Camera.route) {
-        CameraScreen(navigateToPreview)
+        CameraScreen(
+            activity = activity,
+            navigateToPreview = navigateToPreview,
+            navigateToAnalyzer = navigateToAnalyzer)
     }
 
 }
 
 fun NavGraphBuilder.analyzerRoute(
     navigateToCamera: () -> Unit,
-    navigateToPreview: (uri: Uri) -> Unit
+    navigateToPreview: (uri: List<Uri>) -> Unit
 ) {
     composable(
         route = AppScreenNavigation.Analyzer.route,
@@ -66,22 +77,21 @@ fun NavGraphBuilder.analyzerRoute(
         })
     ) { backStackEntry ->
         val imageUriString = backStackEntry.arguments?.getString(BITMAP_NAVIGATION_KEY)
+        val imageUris = imageUriString?.split(",")?.map { Uri.parse(it) } ?: emptyList()
 
-        if (imageUriString != null) {
-            val imageUri = Uri.parse(imageUriString)
-            ProvideWindowInsets(windowInsetsAnimationsEnabled = true) {
-                AnalyzerScreen(
-                    imageUri = imageUri,
-                    navigateToPreview = navigateToPreview,
-                    navigateToCamera = navigateToCamera
-                )
-            }
+
+        ProvideWindowInsets(windowInsetsAnimationsEnabled = true) {
+            AnalyzerScreen(
+                imageUri = imageUris,
+                navigateToPreview = navigateToPreview,
+                navigateToCamera = navigateToCamera
+            )
         }
     }
 }
 
 fun NavGraphBuilder.previewRoute(
-    navigateToAnalyzer: (uri: Uri) -> Unit,
+    navigateToAnalyzer: (uri: List<Uri>) -> Unit,
     navigateBack: () -> Unit,
 ) {
     composable(
@@ -89,16 +99,15 @@ fun NavGraphBuilder.previewRoute(
         arguments = listOf(navArgument(name = BITMAP_NAVIGATION_KEY) {
             type = NavType.StringType
         })
-    ){ backStackEntry ->
+    ) { backStackEntry ->
         val imageUriString = backStackEntry.arguments?.getString(BITMAP_NAVIGATION_KEY)
+        val imageUris = imageUriString?.split(",")?.map { Uri.parse(it) } ?: emptyList()
 
-        if (imageUriString != null){
-            val imageUri = Uri.parse(imageUriString)
-            PreviewImageScreen(
-                imageUri = imageUri,
-                navigateToAnalyzer = navigateToAnalyzer,
-                navigateBack = navigateBack)
-        }
+        PreviewImageScreen(
+            imageUri = imageUris,
+            navigateToAnalyzer = navigateToAnalyzer,
+            navigateBack = navigateBack
+        )
     }
 }
 

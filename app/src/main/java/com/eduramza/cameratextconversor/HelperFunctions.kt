@@ -10,6 +10,7 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.imageResource
 import androidx.core.content.FileProvider
+import com.google.mlkit.vision.documentscanner.GmsDocumentScanningResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -48,4 +49,11 @@ fun Bitmap?.getImageBitmapOrDefault(): ImageBitmap {
 suspend fun deleteTempFile(imageUri: Uri) {
     val fileToDelete = File(imageUri.path!!)
     fileToDelete.delete()
+}
+
+fun saveLocalPDF(context: Context, pdf: GmsDocumentScanningResult.Pdf) {
+    val fos = FileOutputStream(File(context.filesDir, "scan.pdf"))
+    context.contentResolver.openInputStream(pdf.uri)?.use {
+        it.copyTo(fos)
+    }
 }
