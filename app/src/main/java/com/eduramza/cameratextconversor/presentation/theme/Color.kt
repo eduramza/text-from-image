@@ -1,4 +1,4 @@
-package com.eduramza.cameratextconversor.ui.theme
+package com.eduramza.cameratextconversor.presentation.theme
 
 import androidx.compose.ui.graphics.Color
 

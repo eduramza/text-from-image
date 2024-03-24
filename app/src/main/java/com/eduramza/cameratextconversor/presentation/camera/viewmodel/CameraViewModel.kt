@@ -1,5 +1,6 @@
-package com.eduramza.cameratextconversor.camera
+package com.eduramza.cameratextconversor.presentation.camera.viewmodel
 
+import android.app.Activity
 import android.app.Application
 import android.graphics.Bitmap
 import android.graphics.Matrix
@@ -12,15 +13,58 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import com.eduramza.cameratextconversor.createTempImageFile
+import com.eduramza.cameratextconversor.domain.usecase.ShouldShowInterstitialAdUseCase
 import com.eduramza.cameratextconversor.getUriForFile
 import com.eduramza.cameratextconversor.saveBitmapToFile
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.LoadAdError
+import com.google.android.gms.ads.interstitial.InterstitialAd
+import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 
-class CameraViewModel(private val application: Application): AndroidViewModel(application) {
+class CameraViewModel(
+    private val application: Application,
+    private val shouldShowInterstitialAdUseCase: ShouldShowInterstitialAdUseCase = ShouldShowInterstitialAdUseCase()
+): AndroidViewModel(application) {
     val showPreview =  mutableStateOf(false)
     private val imageUri = mutableStateOf<Uri?>(null)
 
     val showDocumentsScanned = mutableStateOf(false)
     private val scansUri = mutableStateOf<List<Uri>>(emptyList())
+
+    private var mInterstitialAd: InterstitialAd? = null
+    private var adRequest = AdRequest.Builder().build()
+    var canShowInterstitialAd = mutableStateOf(false)
+        private set
+    init {
+        loadInterstitialAd()
+    }
+
+    private fun loadInterstitialAd(){
+        InterstitialAd.load(
+            application,
+            "ca-app-pub-3940256099942544/1033173712",
+            adRequest,
+            object : InterstitialAdLoadCallback() {
+                override fun onAdFailedToLoad(p0: LoadAdError) {
+                    super.onAdFailedToLoad(p0)
+                }
+
+                override fun onAdLoaded(ad: InterstitialAd) {
+                    super.onAdLoaded(ad)
+                    mInterstitialAd = ad
+                    canShowInterstitialAd.value = true
+                }
+            })
+    }
+
+    fun handleInterstitialAd(activity: Activity) {
+        if (shouldShowInterstitialAdUseCase()){
+            mInterstitialAd?.show(activity)
+            mInterstitialAd = null
+            canShowInterstitialAd.value = false
+            loadInterstitialAd() //preload next ad
+        }
+    }
 
     fun onImageTaken(controller: LifecycleCameraController){
         takePhoto(

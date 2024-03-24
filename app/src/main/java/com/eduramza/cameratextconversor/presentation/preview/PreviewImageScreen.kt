@@ -1,4 +1,4 @@
-package com.eduramza.cameratextconversor.preview
+package com.eduramza.cameratextconversor.presentation.preview
 
 import android.graphics.Bitmap
 import android.net.Uri
@@ -66,7 +66,7 @@ fun PreviewImageScreen(
     ) { result ->
         if (result.isSuccessful) {
             result.uriContent?.let { uri ->
-                navigateToAnalyzer(imageUri)
+                navigateToAnalyzer(listOf(uri))
             }
         }
         // Handle error if resultCode is not RESULT_OK

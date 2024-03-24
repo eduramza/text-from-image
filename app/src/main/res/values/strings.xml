@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Camera Text Conversor</string>
+    <string name="app_name">Text Scan</string>
     <string name="crop_dialog_title">Gostaria de Ajustar o tamanho da imagem?</string>
     <string name="crop_dialog_confirm">Ajustar</string>
     <string name="not_need_text">Não precisa</string>

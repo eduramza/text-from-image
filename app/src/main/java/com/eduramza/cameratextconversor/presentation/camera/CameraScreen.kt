@@ -1,7 +1,8 @@
-package com.eduramza.cameratextconversor.camera
+package com.eduramza.cameratextconversor.presentation.camera
 
 import android.app.Activity
 import android.app.Activity.RESULT_OK
+import android.app.Application
 import android.content.Context
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -37,6 +38,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eduramza.cameratextconversor.R
+import com.eduramza.cameratextconversor.domain.usecase.ShouldShowInterstitialAdUseCase
+import com.eduramza.cameratextconversor.presentation.camera.viewmodel.CameraViewModel
+import com.eduramza.cameratextconversor.presentation.camera.viewmodel.CameraViewModelFactory
 import com.eduramza.cameratextconversor.saveLocalPDF
 import com.google.mlkit.vision.documentscanner.GmsDocumentScannerOptions
 import com.google.mlkit.vision.documentscanner.GmsDocumentScanning
@@ -49,10 +53,14 @@ fun CameraScreen(
     navigateToAnalyzer: (uris: List<Uri>) -> Unit
 ) {
     val localContext = LocalContext.current.applicationContext
-    val cameraViewModel =
-        viewModel<CameraViewModel>(
-            viewModelStoreOwner = LocalContext.current as ViewModelStoreOwner
-        )
+    val factory = CameraViewModelFactory(
+        LocalContext.current.applicationContext as Application,
+        ShouldShowInterstitialAdUseCase()
+    )
+    val cameraViewModel = viewModel<CameraViewModel>(
+        viewModelStoreOwner = LocalContext.current as ViewModelStoreOwner,
+        factory = factory
+    )
 
     val documentScannerOptions = GmsDocumentScannerOptions.Builder()
         .setScannerMode(GmsDocumentScannerOptions.SCANNER_MODE_FULL)
@@ -208,9 +216,11 @@ fun CameraScreen(
             }
         }
         if (showPreview) {
+            cameraViewModel.handleInterstitialAd(activity)
             cameraViewModel.sentToPreview(navigateToPreview)
         }
         if (showDocumentScanned){
+            cameraViewModel.handleInterstitialAd(activity)
             cameraViewModel.sendToAnalyzer(navigateToAnalyzer)
         }
     }

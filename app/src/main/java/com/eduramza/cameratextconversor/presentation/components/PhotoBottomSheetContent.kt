@@ -1,4 +1,4 @@
-package com.eduramza.cameratextconversor.components
+package com.eduramza.cameratextconversor.presentation.components
 
 import android.graphics.Bitmap
 import androidx.compose.foundation.Image

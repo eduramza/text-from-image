@@ -1,4 +1,4 @@
-package com.eduramza.cameratextconversor
+package com.eduramza.cameratextconversor.presentation
 
 import android.content.Context
 import android.content.pm.PackageManager
@@ -11,15 +11,20 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.navigation.compose.rememberNavController
 import com.eduramza.cameratextconversor.navigation.SetupNavGraph
-import com.eduramza.cameratextconversor.ui.theme.CameraTextConversorTheme
+import com.eduramza.cameratextconversor.presentation.theme.CameraTextConversorTheme
+import com.google.android.gms.ads.MobileAds
 
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (!hasPermission(baseContext)) {
             activityResultLauncher.launch(CAMERAX_PERMISSIONS)
         }
         WindowCompat.setDecorFitsSystemWindows(window, false)
+
+        MobileAds.initialize(this) {}
+
         setContent {
             CameraTextConversorTheme(dynamicColor = false) {
                 val navController = rememberNavController()

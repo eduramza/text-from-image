@@ -1,4 +1,4 @@
-package com.eduramza.cameratextconversor.analyzer
+package com.eduramza.cameratextconversor.presentation.analyzer
 
 import android.content.Context
 import android.content.Intent
@@ -88,7 +88,7 @@ fun AnalyzerScreen(
         isLoading = true
         bitmapList.forEach { bitmap ->
             getTextFromImage(bitmap) { textRecognized ->
-                imageAnalyzerViewModel.updateText(textRecognized)
+                imageAnalyzerViewModel.setAnalyzedText(textRecognized)
             }
         }
 
@@ -150,7 +150,9 @@ fun AnalyzerScreen(
                 },
                 floatingActionButton = {
                     FloatingActionButton(
-                        onClick = { navigateToCamera() },
+                        onClick = {
+                            navigateToCamera()
+                                  },
                         containerColor = BottomAppBarDefaults.bottomAppBarFabColor,
                         elevation = FloatingActionButtonDefaults.bottomAppBarFabElevation()
                     ) {
@@ -182,7 +184,7 @@ fun AnalyzerScreen(
                 ) {
                     OutlinedTextField(
                         value = analyzedText,
-                        onValueChange = { imageAnalyzerViewModel.updateText(it) },
+                        onValueChange = { imageAnalyzerViewModel.editedText(it) },
                         label = { Text(text = stringResource(id = R.string.label_analyzed_text_field)) },
                         modifier = Modifier
                             .fillMaxSize()
@@ -191,7 +193,6 @@ fun AnalyzerScreen(
                     )
                 }
             }
-
         }
     )
 }
@@ -226,9 +227,9 @@ fun getTextFromImage(
 @Preview
 @Composable
 fun previewAnalyzerScreen() {
-    AnalyzerScreen(
-        imageUri = listOf(Uri.parse("")),
-        navigateToPreview = { },
-        navigateToCamera = { }
-    )
+//    AnalyzerScreen(
+//        imageUri = listOf(Uri.parse("")),
+//        navigateToPreview = { },
+//        navigateToCamera = { }
+//    )
 }

@@ -9,15 +9,15 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.eduramza.cameratextconversor.analyzer.AnalyzerScreen
-import com.eduramza.cameratextconversor.camera.CameraScreen
-import com.eduramza.cameratextconversor.preview.PreviewImageScreen
+import com.eduramza.cameratextconversor.presentation.analyzer.AnalyzerScreen
+import com.eduramza.cameratextconversor.presentation.camera.CameraScreen
+import com.eduramza.cameratextconversor.presentation.preview.PreviewImageScreen
 import com.google.accompanist.insets.ProvideWindowInsets
 
 @Composable
 fun SetupNavGraph(
     activity: Activity,
-    navController: NavHostController
+    navController: NavHostController,
 ) {
     NavHost(
         startDestination = AppScreenNavigation.Camera.route,

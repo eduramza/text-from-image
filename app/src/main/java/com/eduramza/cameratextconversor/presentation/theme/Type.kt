@@ -1,4 +1,4 @@
-package com.eduramza.cameratextconversor.ui.theme
+package com.eduramza.cameratextconversor.presentation.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle

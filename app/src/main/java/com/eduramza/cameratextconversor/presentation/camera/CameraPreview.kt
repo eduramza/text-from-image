@@ -1,4 +1,4 @@
-package com.eduramza.cameratextconversor.camera
+package com.eduramza.cameratextconversor.presentation.camera
 
 import androidx.camera.view.LifecycleCameraController
 import androidx.camera.view.PreviewView
