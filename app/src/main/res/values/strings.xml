@@ -12,4 +12,7 @@
     <string name="button_crop_image">Crop Image</string>
     <string name="button_analyzer_image">Analyzer Image</string>
     <string name="content_description_take_photo">Tirar Foto</string>
+
+    <!--TOOLBAR-->
+    <string name="title_preview">Imagens Capturadas</string>
 </resources>

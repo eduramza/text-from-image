@@ -72,6 +72,7 @@ fun AnalyzerScreen(
         viewModel<ImageAnalyzerViewModel>()
 
     val analyzedText by remember { imageAnalyzerViewModel.textAnalyzed }
+    val analyzedImages by remember { imageAnalyzerViewModel.imagesAnalyzed }
     var isLoading by remember { mutableStateOf(false) }
     var bitmapList by remember { mutableStateOf<List<Bitmap>>(emptyList()) }
 
@@ -85,15 +86,18 @@ fun AnalyzerScreen(
         }
     }
 
-    LaunchedEffect(bitmapList) {
-        isLoading = true
-        bitmapList.forEach { bitmap ->
-            getTextFromImage(bitmap) { textRecognized ->
-                imageAnalyzerViewModel.setAnalyzedText(textRecognized)
-            }
-        }
 
-        isLoading = false
+    LaunchedEffect(bitmapList) {
+        if (analyzedImages.isEmpty()){
+            isLoading = true
+            bitmapList.forEach { bitmap ->
+                getTextFromImage(bitmap) { textRecognized ->
+                    imageAnalyzerViewModel.setAnalyzedText(textRecognized)
+                }
+            }
+            isLoading = false
+            imageAnalyzerViewModel.setImagesAnalyzed(bitmapList)
+        }
     }
 
     Scaffold(
@@ -153,7 +157,7 @@ fun AnalyzerScreen(
                     FloatingActionButton(
                         onClick = {
                             navigateToCamera()
-                                  },
+                        },
                         containerColor = BottomAppBarDefaults.bottomAppBarFabColor,
                         elevation = FloatingActionButtonDefaults.bottomAppBarFabElevation()
                     ) {

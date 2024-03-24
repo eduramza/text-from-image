@@ -1,6 +1,7 @@
 package com.eduramza.cameratextconversor.presentation.analyzer
 
 import android.app.Application
+import android.graphics.Bitmap
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.AndroidViewModel
 
@@ -9,7 +10,7 @@ class ImageAnalyzerViewModel(
 ) : AndroidViewModel(application) {
     var textAnalyzed = mutableStateOf("")
         private set
-    private var pages = mutableStateOf(0)
+    var imagesAnalyzed = mutableStateOf(emptyList<Bitmap>())
 
     fun setAnalyzedText(analyzed: String) {
         textAnalyzed.value = textAnalyzed.value + "$analyzed\n\n"
@@ -17,6 +18,10 @@ class ImageAnalyzerViewModel(
 
     fun editedText(input: String) {
         textAnalyzed.value = input
+    }
+
+    fun setImagesAnalyzed(bitmapList: List<Bitmap>) {
+        imagesAnalyzed.value = bitmapList
     }
 
 }

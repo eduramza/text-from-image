@@ -3,6 +3,9 @@ package com.eduramza.cameratextconversor.navigation
 import android.app.Activity
 import android.net.Uri
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -19,6 +22,8 @@ fun SetupNavGraph(
     activity: Activity,
     navController: NavHostController,
 ) {
+    val (shouldShowActions, setShouldShowActions) = remember { mutableStateOf(false) }
+
     NavHost(
         startDestination = AppScreenNavigation.Camera.route,
         navController = navController
@@ -26,6 +31,7 @@ fun SetupNavGraph(
         cameraRoute(
             activity = activity,
             navigateToPreview = {
+                setShouldShowActions(true)
                 navController.navigate(AppScreenNavigation.Preview.previewArgs(it))
             },
             navigateToAnalyzer = {
@@ -39,14 +45,16 @@ fun SetupNavGraph(
             navigateBack = {
                 navController.popBackStack()
             },
+            shouldShowActions
         )
 
         analyzerRoute(
             navigateToCamera = {
                 navController.navigate(AppScreenNavigation.Camera.route)
             },
-            navigateToPreview = {
-                navController.navigate(AppScreenNavigation.Preview.previewArgs(it))
+            navigateToPreview = { list ->
+                setShouldShowActions(false)
+                navController.navigate(AppScreenNavigation.Preview.previewArgs(list))
             }
         )
     }
@@ -93,6 +101,7 @@ fun NavGraphBuilder.analyzerRoute(
 fun NavGraphBuilder.previewRoute(
     navigateToAnalyzer: (uri: List<Uri>) -> Unit,
     navigateBack: () -> Unit,
+    shouldShowActions: Boolean,
 ) {
     composable(
         route = AppScreenNavigation.Preview.route,
@@ -105,6 +114,7 @@ fun NavGraphBuilder.previewRoute(
 
         PreviewImageScreen(
             imageUri = imageUris,
+            shouldShowActions = shouldShowActions,
             navigateToAnalyzer = navigateToAnalyzer,
             navigateBack = navigateBack
         )
