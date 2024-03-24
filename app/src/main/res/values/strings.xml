@@ -11,4 +11,5 @@
     <string name="label_analyzed_text_field">Texto capturado da imagem</string>
     <string name="button_crop_image">Crop Image</string>
     <string name="button_analyzer_image">Analyzer Image</string>
+    <string name="content_description_take_photo">Tirar Foto</string>
 </resources>

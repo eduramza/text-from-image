@@ -93,7 +93,7 @@ fun CameraTextConversorTheme(
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
 
-        darkTheme -> DarkColors
+        darkTheme -> LightColors
         else -> LightColors
     }
     val view = LocalView.current

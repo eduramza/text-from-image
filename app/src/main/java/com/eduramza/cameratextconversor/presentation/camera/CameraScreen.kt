@@ -13,6 +13,7 @@ import androidx.camera.view.CameraController
 import androidx.camera.view.LifecycleCameraController
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,13 +21,16 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Camera
 import androidx.compose.material.icons.filled.Cameraswitch
 import androidx.compose.material.icons.filled.DocumentScanner
 import androidx.compose.material.icons.filled.Photo
-import androidx.compose.material.icons.filled.PhotoCamera
+import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -34,13 +38,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eduramza.cameratextconversor.R
 import com.eduramza.cameratextconversor.domain.usecase.ShouldShowInterstitialAdUseCase
 import com.eduramza.cameratextconversor.presentation.camera.viewmodel.CameraViewModel
 import com.eduramza.cameratextconversor.presentation.camera.viewmodel.CameraViewModelFactory
+import com.eduramza.cameratextconversor.presentation.components.RoundedIconButton
 import com.eduramza.cameratextconversor.saveLocalPDF
 import com.google.mlkit.vision.documentscanner.GmsDocumentScannerOptions
 import com.google.mlkit.vision.documentscanner.GmsDocumentScanning
@@ -148,69 +155,76 @@ fun CameraScreen(
                     .fillMaxSize()
             )
 
-            IconButton(
-                onClick = {
-                    cameraController.cameraSelector =
-                        if (cameraController.cameraSelector == CameraSelector.DEFAULT_BACK_CAMERA) {
-                            CameraSelector.DEFAULT_FRONT_CAMERA
-                        } else CameraSelector.DEFAULT_BACK_CAMERA
-                },
-                modifier = Modifier
-                    .offset(16.dp, 16.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Cameraswitch,
-                    contentDescription = stringResource(id = R.string.content_description_switch_camera)
-                )
-            }
-
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .align(Alignment.BottomCenter)
                     .padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceAround
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(
-                    onClick = {
-                        galleryLauncher.launch("image/*")
-                    }
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Photo,
-                        contentDescription = "Open gallery"
-                    )
-                }
-
-                IconButton(
-                    onClick = {
-                        scanner.getStartScanIntent(activity)
-                            .addOnSuccessListener {
-                                documentScannerLaunch.launch(
-                                    IntentSenderRequest.Builder(it).build()
-                                )
-                            }
-                            .addOnFailureListener {
-
-                            }
-                    }
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.DocumentScanner,
-                        contentDescription = "Scan Document"
-                    )
-                }
-
-                IconButton(
-                    onClick = {
-                        cameraViewModel.onImageTaken(
-                            controller = cameraController
+                    IconButton(
+                        onClick = {
+                            galleryLauncher.launch("image/*")
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.PhotoLibrary,
+                            contentDescription = "Open gallery",
+                            tint = MaterialTheme.colorScheme.onPrimary
                         )
                     }
+                    Text(
+                        text = "Gallery",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                }
+
+                Box(modifier = Modifier.padding(bottom = 56.dp)){
+                    RoundedIconButton(
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        icon = Icons.Default.Camera,
+                        buttonSize = 80.dp,
+                        contentDescription = stringResource(id = R.string.content_description_take_photo),
+                        onClick = {
+                            cameraViewModel.onImageTaken(
+                                controller = cameraController
+                            )
+                        }
+                    )
+                }
+
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.PhotoCamera,
-                        contentDescription = "Take photo"
+                    IconButton(
+                        onClick = {
+                            scanner.getStartScanIntent(activity)
+                                .addOnSuccessListener {
+                                    documentScannerLaunch.launch(
+                                        IntentSenderRequest.Builder(it).build()
+                                    )
+                                }
+                                .addOnFailureListener {
+
+                                }
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.DocumentScanner,
+                            contentDescription = "Scan Document",
+                            tint = MaterialTheme.colorScheme.onPrimary
+                        )
+                    }
+                    Text(
+                        text = "Document",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        textAlign = TextAlign.Center
                     )
                 }
             }

@@ -1,9 +1,11 @@
 package com.eduramza.cameratextconversor.presentation.preview
 
+import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.net.Uri
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.appcompat.app.AppCompatDelegate.NightMode
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -35,6 +37,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.UiMode
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.canhub.cropper.CropImageContract
@@ -115,7 +118,7 @@ fun PreviewImageScreen(
                         modifier = Modifier
                             .fillMaxSize()
                             .weight(1f)
-                            .background(color = MaterialTheme.colorScheme.scrim.copy(alpha = 0.35f))
+                            .background(color = MaterialTheme.colorScheme.scrim.copy(alpha = 0.45f))
                     ) {
                         Text(
                             text = stringResource(id = R.string.button_crop_image),
@@ -151,7 +154,7 @@ fun launchCropActivity(
     launcher.launch(cropOptions)
 }
 
-@Preview
+@Preview(showBackground = true, showSystemUi = true, uiMode = Configuration.UI_MODE_NIGHT_NO)
 @Composable
 fun previewEditImageScreen() {
     PreviewImageScreen(
