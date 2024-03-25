@@ -78,7 +78,7 @@ fun PreviewImageScreen(
         }
     }
 
-    LaunchedEffect(imageUri) { // Use LaunchedEffect to handle loading and deletion
+    LaunchedEffect(imageUri) {
         bitmap = imageUri.map {
             loadBitmap(context, it)
         }
@@ -125,11 +125,13 @@ fun PreviewImageScreen(
 
             LazyColumn(
                 state = listState,
-                contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.6f)),
+                horizontalAlignment = Alignment.CenterHorizontally,
             ){
-                itemsIndexed(imageUri){index: Int, item: Uri ->
+                itemsIndexed(imageUri){_, item: Uri ->
                     AsyncImage(
                         model = item,
                         contentDescription = null,
