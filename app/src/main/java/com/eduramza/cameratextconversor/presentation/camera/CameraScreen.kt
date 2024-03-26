@@ -2,7 +2,6 @@ package com.eduramza.cameratextconversor.presentation.camera
 
 import android.app.Activity
 import android.app.Activity.RESULT_OK
-import android.app.Application
 import android.content.Context
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -18,13 +17,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Camera
-import androidx.compose.material.icons.filled.Cameraswitch
 import androidx.compose.material.icons.filled.DocumentScanner
-import androidx.compose.material.icons.filled.Photo
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -41,12 +37,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eduramza.cameratextconversor.R
-import com.eduramza.cameratextconversor.domain.usecase.ShouldShowInterstitialAdUseCase
+import com.eduramza.cameratextconversor.presentation.AdmobViewModel
 import com.eduramza.cameratextconversor.presentation.camera.viewmodel.CameraViewModel
-import com.eduramza.cameratextconversor.presentation.camera.viewmodel.CameraViewModelFactory
 import com.eduramza.cameratextconversor.presentation.components.RoundedIconButton
 import com.eduramza.cameratextconversor.saveLocalPDF
 import com.google.mlkit.vision.documentscanner.GmsDocumentScannerOptions
@@ -57,17 +51,15 @@ import com.google.mlkit.vision.documentscanner.GmsDocumentScanningResult
 fun CameraScreen(
     activity: Activity,
     navigateToPreview: (uri: List<Uri>) -> Unit,
-    navigateToAnalyzer: (uris: List<Uri>) -> Unit
+    navigateToAnalyzer: (uris: List<Uri>) -> Unit,
+    admobViewModel: AdmobViewModel
 ) {
     val localContext = LocalContext.current.applicationContext
-    val factory = CameraViewModelFactory(
-        LocalContext.current.applicationContext as Application,
-        ShouldShowInterstitialAdUseCase()
-    )
-    val cameraViewModel = viewModel<CameraViewModel>(
-        viewModelStoreOwner = LocalContext.current as ViewModelStoreOwner,
-        factory = factory
-    )
+//    val factory = CameraViewModelFactory(
+//        LocalContext.current.applicationContext as Application,
+//        ShouldShowInterstitialAdUseCase()
+//    )
+    val cameraViewModel: CameraViewModel = viewModel()
 
     val documentScannerOptions = GmsDocumentScannerOptions.Builder()
         .setScannerMode(GmsDocumentScannerOptions.SCANNER_MODE_FULL)
@@ -92,6 +84,7 @@ fun CameraScreen(
 
     CameraScreen(
         cameraViewModel = cameraViewModel,
+        admobViewModel = admobViewModel,
         cameraController = cameraController,
         localContext = localContext,
         activity = activity,
@@ -106,6 +99,7 @@ fun CameraScreen(
 @Composable
 fun CameraScreen(
     cameraViewModel: CameraViewModel,
+    admobViewModel: AdmobViewModel,
     cameraController: LifecycleCameraController,
     localContext: Context,
     activity: Activity,
@@ -230,11 +224,11 @@ fun CameraScreen(
             }
         }
         if (showPreview) {
-            cameraViewModel.handleInterstitialAd(activity)
+            admobViewModel.handleInterstitialAd(activity)
             cameraViewModel.sentToPreview(navigateToPreview)
         }
         if (showDocumentScanned){
-            cameraViewModel.handleInterstitialAd(activity)
+            admobViewModel.handleInterstitialAd(activity)
             cameraViewModel.sendToAnalyzer(navigateToAnalyzer)
         }
     }

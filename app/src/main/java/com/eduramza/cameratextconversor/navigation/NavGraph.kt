@@ -3,17 +3,21 @@ package com.eduramza.cameratextconversor.navigation
 import android.app.Activity
 import android.net.Uri
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.lifecycle.ViewModelStoreOwner
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.eduramza.cameratextconversor.domain.usecase.ShouldShowInterstitialAdUseCase
+import com.eduramza.cameratextconversor.presentation.AdmobViewModel
 import com.eduramza.cameratextconversor.presentation.analyzer.AnalyzerScreen
 import com.eduramza.cameratextconversor.presentation.camera.CameraScreen
+import com.eduramza.cameratextconversor.presentation.camera.viewmodel.AdMobViewModelFactory
 import com.eduramza.cameratextconversor.presentation.preview.PreviewImageScreen
 import com.google.accompanist.insets.ProvideWindowInsets
 
@@ -23,6 +27,14 @@ fun SetupNavGraph(
     navController: NavHostController,
 ) {
     val (shouldShowActions, setShouldShowActions) = remember { mutableStateOf(false) }
+    val factory = AdMobViewModelFactory(
+        activity.application,
+        ShouldShowInterstitialAdUseCase()
+    )
+    val admobViewModel = viewModel<AdmobViewModel>(
+        viewModelStoreOwner = activity as ViewModelStoreOwner,
+        factory = factory
+    )
 
     NavHost(
         startDestination = AppScreenNavigation.Camera.route,
@@ -30,6 +42,7 @@ fun SetupNavGraph(
     ) {
         cameraRoute(
             activity = activity,
+            admobViewModel = admobViewModel,
             navigateToPreview = {
                 setShouldShowActions(true)
                 navController.navigate(AppScreenNavigation.Preview.previewArgs(it))
@@ -63,11 +76,13 @@ fun SetupNavGraph(
 fun NavGraphBuilder.cameraRoute(
     activity: Activity,
     navigateToPreview: (uri: List<Uri>) -> Unit,
-    navigateToAnalyzer: (uri: List<Uri>) -> Unit
+    navigateToAnalyzer: (uri: List<Uri>) -> Unit,
+    admobViewModel: AdmobViewModel
 ) {
     composable(route = AppScreenNavigation.Camera.route) {
         CameraScreen(
             activity = activity,
+            admobViewModel = admobViewModel,
             navigateToPreview = navigateToPreview,
             navigateToAnalyzer = navigateToAnalyzer)
     }

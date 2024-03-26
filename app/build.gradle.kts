@@ -71,6 +71,7 @@ dependencies {
     //Compose constraint layout
     implementation("androidx.constraintlayout:constraintlayout-compose:1.0.1")
     implementation ("com.google.accompanist:accompanist-insets:0.28.0")
+    implementation("androidx.test:core-ktx:1.5.0")
 
     //CameraX
     val camerax_version  = "1.3.1"
