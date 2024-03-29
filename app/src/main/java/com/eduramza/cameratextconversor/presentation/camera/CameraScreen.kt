@@ -228,7 +228,6 @@ fun CameraScreen(
             }
         }
         if (showPreview) {
-
             admobViewModel.handleInterstitialAd(activity)
             cameraViewModel.sentToPreview(navigateToPreview)
         }
