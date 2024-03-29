@@ -43,6 +43,10 @@ import com.eduramza.cameratextconversor.presentation.AdmobViewModel
 import com.eduramza.cameratextconversor.presentation.camera.viewmodel.CameraViewModel
 import com.eduramza.cameratextconversor.presentation.components.RoundedIconButton
 import com.eduramza.cameratextconversor.saveLocalPDF
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.LoadAdError
+import com.google.android.gms.ads.interstitial.InterstitialAd
+import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.google.mlkit.vision.documentscanner.GmsDocumentScannerOptions
 import com.google.mlkit.vision.documentscanner.GmsDocumentScanning
 import com.google.mlkit.vision.documentscanner.GmsDocumentScanningResult
@@ -224,6 +228,7 @@ fun CameraScreen(
             }
         }
         if (showPreview) {
+
             admobViewModel.handleInterstitialAd(activity)
             cameraViewModel.sentToPreview(navigateToPreview)
         }
@@ -232,5 +237,22 @@ fun CameraScreen(
             cameraViewModel.sendToAnalyzer(navigateToAnalyzer)
         }
     }
+}
+
+private fun showInterstitialAd(activity: Activity){
+    InterstitialAd.load(
+        activity,
+        "ca-app-pub-3940256099942544/1033173712",
+        AdRequest.Builder().build(),
+        object : InterstitialAdLoadCallback(){
+            override fun onAdFailedToLoad(p0: LoadAdError) {
+                super.onAdFailedToLoad(p0)
+            }
+
+            override fun onAdLoaded(p0: InterstitialAd) {
+                super.onAdLoaded(p0)
+            }
+        }
+    )
 }
 

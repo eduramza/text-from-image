@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -19,7 +20,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Photo
 import androidx.compose.material.icons.filled.PhotoCamera
-import androidx.compose.material.icons.filled.Preview
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.BottomAppBarDefaults
@@ -52,6 +52,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eduramza.cameratextconversor.R
 import com.eduramza.cameratextconversor.loadBitmap
+import com.eduramza.cameratextconversor.presentation.components.AdmobBanner
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
@@ -196,6 +197,7 @@ fun AnalyzerScreen(
                             .padding(horizontal = 16.dp)
                             .defaultMinSize(minHeight = 500.dp)
                     )
+                    AdmobBanner(modifier = Modifier.fillMaxWidth())
                 }
             }
         }
@@ -228,6 +230,7 @@ fun getTextFromImage(
             Log.d("ImageAnalyzer", "Failed to Analyze Image")
         }
 }
+
 
 @Preview
 @Composable
