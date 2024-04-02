@@ -41,16 +41,6 @@ suspend fun loadBitmap(context: Context, imageUri: Uri): Bitmap {
     }
 }
 
-@Composable
-fun Bitmap?.getImageBitmapOrDefault(): ImageBitmap {
-    return this?.asImageBitmap() ?: ImageBitmap.imageResource(id = R.drawable.no_image)
-}
-
-suspend fun deleteTempFile(imageUri: Uri) {
-    val fileToDelete = File(imageUri.path!!)
-    fileToDelete.delete()
-}
-
 fun saveLocalPDF(context: Context, pdf: GmsDocumentScanningResult.Pdf) {
     val fos = FileOutputStream(File(context.filesDir, "scan.pdf"))
     context.contentResolver.openInputStream(pdf.uri)?.use {

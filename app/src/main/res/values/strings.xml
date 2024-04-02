@@ -15,4 +15,7 @@
 
     <!--TOOLBAR-->
     <string name="title_preview">Imagens Capturadas</string>
+    <string name="menu_save_pdf">PDF</string>
+    <string name="menu_save_docx">Docx</string>
+    <string name="menu_save_txt">txt</string>
 </resources>
