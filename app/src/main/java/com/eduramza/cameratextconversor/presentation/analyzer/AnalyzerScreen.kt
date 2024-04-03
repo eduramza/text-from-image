@@ -1,16 +1,9 @@
 package com.eduramza.cameratextconversor.presentation.analyzer
 
-import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.Paint
-import android.graphics.pdf.PdfDocument
-import android.media.MediaScannerConnection
 import android.net.Uri
-import android.os.Environment
 import android.util.Log
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,6 +25,7 @@ import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.BottomAppBarDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -74,17 +68,10 @@ import com.eduramza.cameratextconversor.R
 import com.eduramza.cameratextconversor.getUriForFile
 import com.eduramza.cameratextconversor.loadBitmap
 import com.eduramza.cameratextconversor.presentation.components.AdmobBanner
+import com.eduramza.cameratextconversor.utils.FileUtils
+import com.eduramza.cameratextconversor.utils.ShareUtils
 import com.google.android.gms.ads.AdSize
-import com.google.mlkit.vision.common.InputImage
-import com.google.mlkit.vision.text.TextRecognition
-import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import kotlinx.coroutines.launch
-import java.io.File
-import java.io.FileOutputStream
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-import kotlin.math.min
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -128,13 +115,8 @@ fun AnalyzerScreen(
     LaunchedEffect(bitmapList) {
         if (analyzedImages.isEmpty()) {
             isLoading = true
-            bitmapList.forEach { bitmap ->
-                getTextFromImage(bitmap) { textRecognized ->
-                    imageAnalyzerViewModel.setAnalyzedText(textRecognized)
-                }
-            }
+            imageAnalyzerViewModel.getTextFromEachImage(bitmapList)
             isLoading = false
-            imageAnalyzerViewModel.setImagesAnalyzed(bitmapList)
         }
     }
 
@@ -175,7 +157,7 @@ fun AnalyzerScreen(
                     }
                     IconButton(
                         onClick = {
-                            shareContent(analyzedText, context)
+                            ShareUtils.shareContent(analyzedText, context)
                         }
                     ) {
                         Icon(
@@ -215,7 +197,7 @@ fun AnalyzerScreen(
                             DropdownMenuItem(
                                 text = { Text(text = stringResource(id = R.string.menu_save_pdf)) },
                                 onClick = {
-                                    saveTextToPdf(
+                                    FileUtils.saveTextToPdf(
                                         textFromImage = analyzedText,
                                         appName = appName,
                                         bitmapList = bitmapList,
@@ -261,7 +243,7 @@ fun AnalyzerScreen(
                             DropdownMenuItem(
                                 text = { Text(text = stringResource(id = R.string.menu_save_txt)) },
                                 onClick = {
-                                    saveTextToTxt(analyzedText, appName, context)
+                                    FileUtils.saveTextToTxt(analyzedText, appName, context)
                                     dropDownExpanded = false
                                 }
                             )
@@ -289,280 +271,52 @@ fun AnalyzerScreen(
         content = { innerPadding ->
             padding = innerPadding
 
-            Box(modifier = Modifier.fillMaxSize()) {
-                // Main content that fills the available space
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .imePadding()
-                        .navigationBarsPadding()
-                        .padding(
-                            top = padding.calculateTopPadding(),
-                            bottom = padding.calculateBottomPadding() + AdSize.BANNER.height.dp
-                        )
-                        .verticalScroll(state = scrollState)
-                ) {
-                    OutlinedTextField(
-                        value = analyzedText,
-                        onValueChange = { imageAnalyzerViewModel.editedText(it) },
-                        label = { Text(text = stringResource(id = R.string.label_analyzed_text_field)) },
+            if (isLoading){
+                CircularProgressIndicator()
+            } else {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    // Main content that fills the available space
+                    Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(horizontal = 16.dp)
-                            .defaultMinSize(minHeight = 500.dp)
+                            .imePadding()
+                            .navigationBarsPadding()
+                            .padding(
+                                top = padding.calculateTopPadding(),
+                                bottom = padding.calculateBottomPadding() + AdSize.BANNER.height.dp
+                            )
+                            .verticalScroll(state = scrollState)
+                    ) {
+                        OutlinedTextField(
+                            value = analyzedText,
+                            onValueChange = { imageAnalyzerViewModel.editedText(it) },
+                            label = { Text(text = stringResource(id = R.string.label_analyzed_text_field)) },
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(horizontal = 16.dp)
+                                .defaultMinSize(minHeight = 500.dp)
+                        )
+                    }
+
+                    // AdmobBanner aligned to the bottom
+                    AdmobBanner(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .fillMaxWidth()
+                            .padding(bottom = padding.calculateBottomPadding())
                     )
                 }
-
-                // AdmobBanner aligned to the bottom
-                AdmobBanner(
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .fillMaxWidth()
-                        .padding(bottom = padding.calculateBottomPadding())
-                )
             }
         }
     )
 }
 
-private fun saveTextToTxt(analyzedText: String, appName: String, context: Context) {
-    try {
-        val outputDir = getOutputDirectory(context, appName)
-        val currentDate = getCurrentDateTime()
-        val fileName = "$appName-$currentDate.pdf"
-        val file = File(outputDir, fileName)
-
-        FileOutputStream(file).use {
-            it.write(analyzedText.toByteArray())
-        }
-
-        updateMedia(context, file)
-
-        Log.d("SaveFile", "Arquivo salvo em ${file.parentFile}")
-        Toast.makeText(context, "File saved with success", Toast.LENGTH_SHORT).show()
-    } catch (ex: Exception) {
-        Log.e("SaveFile", ex.message.toString())
-        Toast.makeText(context, "File was not saved", Toast.LENGTH_SHORT).show()
-    }
-}
-
-private fun getOutputDirectory(context: Context, pathName: String): File {
-    return context.getExternalFilesDir(pathName) ?: File("/storage/emulated/0/$pathName")
-}
-
-private fun saveTextToPdf(
-    textFromImage: String,
-    appName: String,
-    bitmapList: List<Bitmap>,
-    context: Context,
-    onSuccess: (File) -> Unit,
-    onError: (Exception) -> Unit
-) {
-    try {
-        val outputDir = getOutputDirectory(context, appName)
-        val currentDate = getCurrentDateTime()
-        val fileName = "$appName-$currentDate.pdf"
-        val file = File(outputDir, fileName)
-        val document = PdfDocument()
-
-        saveImagesOnThePdf(document, bitmapList, file)
-
-        val pagesToText = calculatePagesNeeded(
-            text = textFromImage,
-            textSize = 24f,
-            paddingVertical = 24f
-        )
-
-        var remainingText = textFromImage
-        repeat(pagesToText) { pgNumber ->
-            val pageInfo =
-                PdfDocument.PageInfo.Builder(PAGE_WIDTH, PAGE_HEIGHT, pgNumber + 1).create()
-            val page = document.startPage(pageInfo)
-            val canvas = page.canvas
-
-            remainingText = drawTextOnPage(canvas, remainingText)
-
-            document.finishPage(page)
-        }
-
-        val fileOutputStream = FileOutputStream(file)
-        document.writeTo(fileOutputStream)
-        fileOutputStream.close()
-
-        document.close()
-        updateMedia(context, file)
-
-        onSuccess(file)
-    } catch (ex: Exception) {
-        Log.e("SaveFile", ex.message.toString())
-        onError(ex)
-    }
-}
-
-private const val PAGE_WIDTH = 794
-private const val PAGE_HEIGHT = 1123
-
-private fun drawTextOnPage(
-    canvas: Canvas,
-    text: String,
-    textSize: Float = 24f,
-    paddingVertical: Float = 20f,
-    paddingHorizontal: Float = 20f
-): String {
-    val paint = Paint()
-    paint.textSize = textSize
-
-    val textLines = text.split("\n")
-
-    var yPosition = paddingVertical + textSize
-
-    val remainingLines = mutableListOf<String>()
-
-    textLines.forEach { line ->
-        // Check if there is enough space vertically for the next line
-        if (yPosition + textSize <= PAGE_HEIGHT - paddingVertical) {
-            // Calculate the position to align the text to the left
-            val xPosition = paddingHorizontal
-
-            // Draw the text
-            canvas.drawText(line, xPosition, yPosition, paint)
-            yPosition += textSize + 5 // Adjust spacing between lines
-        } else {
-            // Store the remaining lines
-            remainingLines.add(line)
-        }
-    }
-
-    // Return the remaining text
-    return remainingLines.joinToString("\n")
-}
-
-private fun calculatePagesNeeded(
-    text: String,
-    textSize: Float,
-    paddingVertical: Float
-): Int {
-    val paint = Paint()
-    paint.textSize = textSize
-
-    val textLines = text.split("\n")
-    var totalLines = 0
-    var currentPageLines = 0
-
-    textLines.forEach { line ->
-        val lineWidth = paint.measureText(line)
-        val lineHeight = textSize
-
-        // Calculate lines that fit on the current page
-        val linesOnCurrentPage = ((PAGE_HEIGHT - 2 * paddingVertical) / lineHeight).toInt()
-        if (currentPageLines + 1 <= linesOnCurrentPage) {
-            currentPageLines++
-        } else {
-            // Move to the next page
-            totalLines++
-            currentPageLines = 1
-        }
-
-        // Check if line wraps to the next line
-        if (lineWidth > PAGE_WIDTH) {
-            val wrappedLines = (lineWidth / PAGE_WIDTH).toInt() + 1
-            currentPageLines += wrappedLines - 1 // Subtract 1 for the original line
-        }
-    }
-
-    // Account for the last page
-    if (currentPageLines > 0) {
-        totalLines++
-    }
-
-    return totalLines
-}
-
-
-private fun saveImagesOnThePdf(
-    document: PdfDocument,
-    bitmapList: List<Bitmap>,
-    file: File
-) {
-
-    bitmapList.forEachIndexed { _, bitmap ->
-        val pageInfo = PdfDocument.PageInfo.Builder(PAGE_WIDTH, PAGE_HEIGHT, 1).create()
-        val imagePage = document.startPage(pageInfo)
-        val canvas = imagePage.canvas
-
-        // Scale the bitmap to fit the page while maintaining aspect ratio
-        val scaledBitmap = scaleBitmapToFitPage(bitmap, PAGE_WIDTH, PAGE_HEIGHT)
-
-        // Calculate the position to center the image on the page
-        val x = (PAGE_WIDTH - scaledBitmap.width) / 2f
-        val y = (PAGE_HEIGHT - scaledBitmap.height) / 2f
-
-        // Draw the scaled bitmap onto the page
-        canvas.drawBitmap(scaledBitmap, x, y, null)
-
-        document.finishPage(imagePage)
-    }
-
-    Log.d("SaveFile", "PDF file saved at ${file.absolutePath}")
-}
-
-private fun scaleBitmapToFitPage(bitmap: Bitmap, pageWidth: Int, pageHeight: Int): Bitmap {
-    val bitmapWidth = bitmap.width
-    val bitmapHeight = bitmap.height
-
-    val scaleFactor = min(
-        pageWidth.toFloat() / bitmapWidth.toFloat(),
-        pageHeight.toFloat() / bitmapHeight.toFloat()
-    )
-
-    val scaledWidth = (bitmapWidth * scaleFactor).toInt()
-    val scaledHeight = (bitmapHeight * scaleFactor).toInt()
-
-    return Bitmap.createScaledBitmap(bitmap, scaledWidth, scaledHeight, true)
-}
-
-private fun updateMedia(context: Context, file: File) {
-    MediaScannerConnection.scanFile(context, arrayOf(file.absolutePath), null) { _, _ -> }
-}
-
-private fun getCurrentDateTime(): String {
-    val sdf = SimpleDateFormat("dd-MM-yyyy-HH-mm-ss-SSS", Locale.getDefault())
-    return sdf.format(Date())
-}
-
-fun getTextFromImage(
-    bitmap: Bitmap,
-    updateAnalyzedText: (String) -> Unit
-) {
-    val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
-    val inputImage: InputImage = InputImage.fromBitmap(bitmap, 0)
-
-    recognizer.process(inputImage)
-        .addOnSuccessListener { visionText ->
-            updateAnalyzedText(visionText.text)
-        }
-        .addOnFailureListener {
-            Log.d("ImageAnalyzer", "Failed to Analyze Image")
-        }
-}
-
-fun shareContent(analyzedText: String, context: Context) {
-    val sendIntent = Intent().apply {
-        action = Intent.ACTION_SEND
-        putExtra(Intent.EXTRA_TEXT, analyzedText)
-        type = "text/plain"
-    }
-
-    val shareIntent = Intent.createChooser(sendIntent, "Share text using...")
-    context.startActivity(shareIntent)
-}
-
 @Preview
 @Composable
 fun previewAnalyzerScreen() {
-//    AnalyzerScreen(
-//        imageUri = listOf(Uri.parse("")),
-//        navigateToPreview = { },
-//        navigateToCamera = { }
-//    )
+    AnalyzerScreen(
+        imageUri = listOf(Uri.parse("")),
+        navigateToPreview = { },
+        navigateToCamera = { }
+    )
 }
