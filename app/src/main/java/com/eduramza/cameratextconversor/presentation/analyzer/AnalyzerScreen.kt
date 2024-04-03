@@ -42,6 +42,10 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -50,6 +54,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -66,12 +71,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eduramza.cameratextconversor.R
+import com.eduramza.cameratextconversor.getUriForFile
 import com.eduramza.cameratextconversor.loadBitmap
 import com.eduramza.cameratextconversor.presentation.components.AdmobBanner
 import com.google.android.gms.ads.AdSize
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
+import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
@@ -103,6 +110,11 @@ fun AnalyzerScreen(
     var dropDownExpanded by remember { mutableStateOf(false) }
     var menuOffset by remember { mutableStateOf(Offset.Zero) }
 
+    val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val titleSnackbar = stringResource(id = R.string.snackbar_file_saved)
+    val actionSnackbar = stringResource(id = R.string.snackbar_open_action)
+
     LaunchedEffect(key1 = scrollState.maxValue) {
         scrollState.scrollTo(scrollState.maxValue)
     }
@@ -127,6 +139,9 @@ fun AnalyzerScreen(
     }
 
     Scaffold(
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState)
+        },
         topBar = {
             TopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -200,14 +215,46 @@ fun AnalyzerScreen(
                             DropdownMenuItem(
                                 text = { Text(text = stringResource(id = R.string.menu_save_pdf)) },
                                 onClick = {
-                                    saveTextToPdf(analyzedText, appName, bitmapList, context)
-                                    dropDownExpanded = false
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text(text = stringResource(id = R.string.menu_save_docx)) },
-                                onClick = {
-                                    saveTextToDocx(analyzedText, appName, bitmapList)
+                                    saveTextToPdf(
+                                        textFromImage = analyzedText,
+                                        appName = appName,
+                                        bitmapList = bitmapList,
+                                        context = context,
+                                        onSuccess = { file ->
+                                            scope.launch {
+                                                val result = snackbarHostState.showSnackbar(
+                                                    message = titleSnackbar,
+                                                    actionLabel = actionSnackbar,
+                                                    withDismissAction = false,
+                                                    duration = SnackbarDuration.Indefinite
+                                                )
+
+                                                when (result) {
+                                                    SnackbarResult.ActionPerformed -> {
+                                                        val fileUri = getUriForFile(context, file)
+                                                        val intent = Intent(Intent.ACTION_VIEW)
+                                                        intent.setDataAndType(
+                                                            fileUri,
+                                                            "application/pdf"
+                                                        )
+                                                        intent.flags =
+                                                            Intent.FLAG_GRANT_READ_URI_PERMISSION
+                                                        context.startActivity(intent)
+                                                    }
+
+                                                    SnackbarResult.Dismissed -> {
+                                                        /* Handle snackbar dismissed */
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        onError = {
+                                            Log.e(
+                                                "SavePdf",
+                                                "Erro ao salvar o PDF: ${it.message}",
+                                                it
+                                            )
+                                        })
                                     dropDownExpanded = false
                                 }
                             )
@@ -278,13 +325,12 @@ fun AnalyzerScreen(
     )
 }
 
-private fun saveTextToDocx(analyzedText: String, appName: String, bitmapList: List<Bitmap>) {
-    TODO("Not yet implemented")
-}
-
 private fun saveTextToTxt(analyzedText: String, appName: String, context: Context) {
     try {
-        val file = getFilePath(appName, "txt")
+        val outputDir = getOutputDirectory(context, appName)
+        val currentDate = getCurrentDateTime()
+        val fileName = "$appName-$currentDate.pdf"
+        val file = File(outputDir, fileName)
 
         FileOutputStream(file).use {
             it.write(analyzedText.toByteArray())
@@ -292,7 +338,7 @@ private fun saveTextToTxt(analyzedText: String, appName: String, context: Contex
 
         updateMedia(context, file)
 
-        Log.d("SaveFile", "Arquivo salvo em ${file.absolutePath}")
+        Log.d("SaveFile", "Arquivo salvo em ${file.parentFile}")
         Toast.makeText(context, "File saved with success", Toast.LENGTH_SHORT).show()
     } catch (ex: Exception) {
         Log.e("SaveFile", ex.message.toString())
@@ -300,14 +346,23 @@ private fun saveTextToTxt(analyzedText: String, appName: String, context: Contex
     }
 }
 
+private fun getOutputDirectory(context: Context, pathName: String): File {
+    return context.getExternalFilesDir(pathName) ?: File("/storage/emulated/0/$pathName")
+}
+
 private fun saveTextToPdf(
     textFromImage: String,
     appName: String,
     bitmapList: List<Bitmap>,
-    context: Context
+    context: Context,
+    onSuccess: (File) -> Unit,
+    onError: (Exception) -> Unit
 ) {
     try {
-        val file = getFilePath(appName, "pdf")
+        val outputDir = getOutputDirectory(context, appName)
+        val currentDate = getCurrentDateTime()
+        val fileName = "$appName-$currentDate.pdf"
+        val file = File(outputDir, fileName)
         val document = PdfDocument()
 
         saveImagesOnThePdf(document, bitmapList, file)
@@ -319,8 +374,9 @@ private fun saveTextToPdf(
         )
 
         var remainingText = textFromImage
-        repeat(pagesToText){ pgNumber ->
-            val pageInfo = PdfDocument.PageInfo.Builder(PAGE_WIDTH, PAGE_HEIGHT, pgNumber + 1).create()
+        repeat(pagesToText) { pgNumber ->
+            val pageInfo =
+                PdfDocument.PageInfo.Builder(PAGE_WIDTH, PAGE_HEIGHT, pgNumber + 1).create()
             val page = document.startPage(pageInfo)
             val canvas = page.canvas
 
@@ -334,12 +390,12 @@ private fun saveTextToPdf(
         fileOutputStream.close()
 
         document.close()
-
         updateMedia(context, file)
 
-
+        onSuccess(file)
     } catch (ex: Exception) {
         Log.e("SaveFile", ex.message.toString())
+        onError(ex)
     }
 }
 
@@ -380,6 +436,7 @@ private fun drawTextOnPage(
     // Return the remaining text
     return remainingLines.joinToString("\n")
 }
+
 private fun calculatePagesNeeded(
     text: String,
     textSize: Float,
@@ -466,19 +523,6 @@ private fun scaleBitmapToFitPage(bitmap: Bitmap, pageWidth: Int, pageHeight: Int
 
 private fun updateMedia(context: Context, file: File) {
     MediaScannerConnection.scanFile(context, arrayOf(file.absolutePath), null) { _, _ -> }
-}
-
-private fun getFilePath(appName: String, extension: String): File {
-    val currentDate = getCurrentDateTime()
-    val fileName = "$appName-$currentDate.$extension"
-    val directory = File(
-        Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
-        appName
-    )
-    if (!directory.exists()) {
-        directory.mkdirs()
-    }
-    return File(directory, fileName)
 }
 
 private fun getCurrentDateTime(): String {
