@@ -20,4 +20,7 @@
     <string name="menu_save_pdf">PDF</string>
     <string name="menu_save_docx">Docx</string>
     <string name="menu_save_txt">txt</string>
+
+
+    <string name="camera_screen_document">Scan \nDocuments</string>
 </resources>

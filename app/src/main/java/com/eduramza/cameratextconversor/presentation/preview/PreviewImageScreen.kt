@@ -135,7 +135,8 @@ fun PreviewImageScreen(
                     AsyncImage(
                         model = item,
                         contentDescription = null,
-                        contentScale = ContentScale.FillWidth
+                        contentScale = ContentScale.FillWidth,
+                        modifier = Modifier.padding(8.dp)
                     )
                 }
             }

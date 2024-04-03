@@ -219,10 +219,11 @@ fun CameraScreen(
                         )
                     }
                     Text(
-                        text = "Document",
+                        text = stringResource(id = R.string.camera_screen_document),
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onPrimary,
-                        textAlign = TextAlign.Center
+                        textAlign = TextAlign.Center,
+                        lineHeight = 10.sp
                     )
                 }
             }
@@ -237,21 +238,3 @@ fun CameraScreen(
         }
     }
 }
-
-private fun showInterstitialAd(activity: Activity){
-    InterstitialAd.load(
-        activity,
-        "ca-app-pub-3940256099942544/1033173712",
-        AdRequest.Builder().build(),
-        object : InterstitialAdLoadCallback(){
-            override fun onAdFailedToLoad(p0: LoadAdError) {
-                super.onAdFailedToLoad(p0)
-            }
-
-            override fun onAdLoaded(p0: InterstitialAd) {
-                super.onAdLoaded(p0)
-            }
-        }
-    )
-}
-
