@@ -13,35 +13,47 @@ class ImageAnalyzerViewModel : ViewModel() {
         private set
     var imagesAnalyzed = mutableStateOf(emptyList<Bitmap>())
 
+    private var imageIndex = 0
+    private var listSize = 0
+
     private fun setAnalyzedText(analyzed: String) {
-        textAnalyzed.value = textAnalyzed.value + "$analyzed\n\n"
+        if (listSize > 1) {
+            imageIndex++
+            val actual = textAnalyzed.value
+            textAnalyzed.value = "$actual*** Imagem $imageIndex *** \n\n$analyzed\n\n"
+        } else {
+            textAnalyzed.value = textAnalyzed.value + analyzed
+        }
     }
 
     fun editedText(input: String) {
         textAnalyzed.value = input
     }
 
-    fun setImagesAnalyzed(bitmapList: List<Bitmap>) {
+    private fun setImagesAnalyzed(bitmapList: List<Bitmap>) {
         imagesAnalyzed.value = bitmapList
     }
 
     fun getTextFromEachImage(
         bitmaps: List<Bitmap>
     ) {
-        val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
-        bitmaps.forEach { bitmap ->
-            val inputImage: InputImage = InputImage.fromBitmap(bitmap, 0)
+        if (textAnalyzed.value.isEmpty()){
+            val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+            listSize = bitmaps.size
+            bitmaps.forEach { bitmap ->
+                val inputImage: InputImage = InputImage.fromBitmap(bitmap, 0)
 
-            recognizer.process(inputImage)
-                .addOnSuccessListener { visionText ->
-                    setAnalyzedText(visionText.text)
-                }
-                .addOnFailureListener {
-                    Log.d("ImageAnalyzer", "Failed to Analyze Image")
-                }
-                .addOnCompleteListener {
-                    imagesAnalyzed.value.plus(bitmap)
-                }
+                recognizer.process(inputImage)
+                    .addOnSuccessListener { visionText ->
+                        setAnalyzedText(visionText.text)
+                    }
+                    .addOnFailureListener {
+                        Log.d("ImageAnalyzer", "Failed to Analyze Image")
+                    }
+                    .addOnCompleteListener {
+                        imagesAnalyzed.value.plus(bitmap)
+                    }
+            }
         }
     }
 
