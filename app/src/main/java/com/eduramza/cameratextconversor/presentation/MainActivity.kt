@@ -27,7 +27,7 @@ class MainActivity : ComponentActivity() {
         if (!hasPermission(baseContext)) {
             activityResultLauncher.launch(CAMERAX_PERMISSIONS)
         }
-        WindowCompat.setDecorFitsSystemWindows(window, false)
+//        WindowCompat.setDecorFitsSystemWindows(window, false)
 
         setContent {
             CameraTextConversorTheme(dynamicColor = false) {

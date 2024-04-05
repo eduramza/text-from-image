@@ -8,12 +8,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -68,6 +70,7 @@ import com.eduramza.cameratextconversor.R
 import com.eduramza.cameratextconversor.getUriForFile
 import com.eduramza.cameratextconversor.loadBitmap
 import com.eduramza.cameratextconversor.presentation.components.AdmobBanner
+import com.eduramza.cameratextconversor.presentation.components.OutlinedTextFieldWithIconButton
 import com.eduramza.cameratextconversor.utils.FileUtils
 import com.eduramza.cameratextconversor.utils.ShareUtils
 import com.google.android.gms.ads.AdSize
@@ -145,16 +148,6 @@ fun AnalyzerScreen(
         bottomBar = {
             BottomAppBar(
                 actions = {
-                    IconButton(
-                        onClick = {
-                            clipboardManager.setText(AnnotatedString(analyzedText))
-                        }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.ContentCopy,
-                            contentDescription = "Copy Content",
-                        )
-                    }
                     IconButton(
                         onClick = {
                             ShareUtils.shareContent(analyzedText, context)
@@ -271,11 +264,10 @@ fun AnalyzerScreen(
         content = { innerPadding ->
             padding = innerPadding
 
-            if (isLoading){
+            if (isLoading) {
                 CircularProgressIndicator()
             } else {
                 Box(modifier = Modifier.fillMaxSize()) {
-                    // Main content that fills the available space
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
@@ -287,18 +279,24 @@ fun AnalyzerScreen(
                             )
                             .verticalScroll(state = scrollState)
                     ) {
-                        OutlinedTextField(
+                        OutlinedTextFieldWithIconButton(
                             value = analyzedText,
                             onValueChange = { imageAnalyzerViewModel.editedText(it) },
                             label = { Text(text = stringResource(id = R.string.label_analyzed_text_field)) },
                             modifier = Modifier
                                 .fillMaxSize()
                                 .padding(horizontal = 16.dp)
-                                .defaultMinSize(minHeight = 500.dp)
+                                .defaultMinSize(minHeight = 500.dp),
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Default.ContentCopy,
+                                    contentDescription = "Copy Content",
+                                )
+                            },
+                            onClickIcon = { clipboardManager.setText(AnnotatedString(analyzedText)) }
                         )
                     }
 
-                    // AdmobBanner aligned to the bottom
                     AdmobBanner(
                         modifier = Modifier
                             .align(Alignment.BottomCenter)
@@ -310,6 +308,8 @@ fun AnalyzerScreen(
         }
     )
 }
+
+
 
 @Preview
 @Composable
