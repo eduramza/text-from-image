@@ -4,15 +4,23 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.navigation.compose.rememberNavController
+import com.eduramza.cameratextconversor.R
 import com.eduramza.cameratextconversor.navigation.SetupNavGraph
 import com.eduramza.cameratextconversor.presentation.theme.CameraTextConversorTheme
+import java.io.File
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 
 class MainActivity : ComponentActivity() {
+
+    private lateinit var outputDirectory: File
+    private lateinit var cameraExecutor: ExecutorService
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -25,10 +33,14 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberNavController()
                 SetupNavGraph(
                     activity = this,
-                    navController = navController
+                    outputDirectory = outputDirectory,
+                    executor = cameraExecutor,
+                    navController = navController,
                 )
             }
         }
+        outputDirectory = getOutputDirectory()
+        cameraExecutor = Executors.newSingleThreadExecutor()
     }
 
     private val activityResultLauncher =
@@ -47,9 +59,6 @@ class MainActivity : ComponentActivity() {
         }
 
     companion object {
-        private const val TAG = "CameraTextConversor"
-        private const val FILENAME_FORMAT = "dd-MM-yyyy-HH-mm-ss-SSS"
-
         private val CAMERAX_PERMISSIONS = mutableListOf(
             android.Manifest.permission.CAMERA
         ).apply {
@@ -61,5 +70,18 @@ class MainActivity : ComponentActivity() {
         fun hasPermission(context: Context) = CAMERAX_PERMISSIONS.all {
             ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
         }
+    }
+
+    private fun getOutputDirectory(): File {
+        val mediaDir = externalMediaDirs.firstOrNull()?.let {
+            File(it, resources.getString(R.string.app_name)).apply { mkdirs() }
+        }
+
+        return if (mediaDir != null && mediaDir.exists()) mediaDir else filesDir
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        cameraExecutor.shutdown()
     }
 }

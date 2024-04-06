@@ -4,13 +4,17 @@ import android.app.Activity
 import android.app.Activity.RESULT_OK
 import android.content.Context
 import android.net.Uri
+import android.util.Log
+import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
-import androidx.camera.view.CameraController
-import androidx.camera.view.LifecycleCameraController
+import androidx.camera.core.ImageCapture
+import androidx.camera.core.Preview
+import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.view.PreviewView
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,34 +33,86 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eduramza.cameratextconversor.R
 import com.eduramza.cameratextconversor.presentation.AdmobViewModel
 import com.eduramza.cameratextconversor.presentation.camera.viewmodel.CameraViewModel
+import com.eduramza.cameratextconversor.presentation.camera.viewmodel.PhotoCapturedModel
 import com.eduramza.cameratextconversor.presentation.components.RoundedIconButton
 import com.eduramza.cameratextconversor.saveLocalPDF
 import com.google.mlkit.vision.documentscanner.GmsDocumentScannerOptions
 import com.google.mlkit.vision.documentscanner.GmsDocumentScanning
 import com.google.mlkit.vision.documentscanner.GmsDocumentScanningResult
+import java.io.File
+import java.util.concurrent.ExecutorService
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
 @Composable
 fun CameraScreen(
     activity: Activity,
     navigateToPreview: (uri: List<Uri>) -> Unit,
     navigateToAnalyzer: (uris: List<Uri>) -> Unit,
-    admobViewModel: AdmobViewModel
+    admobViewModel: AdmobViewModel,
+    outputDirectory: File,
+    executor: ExecutorService,
 ) {
-    val localContext = LocalContext.current.applicationContext
+
     val cameraViewModel: CameraViewModel = viewModel()
+
+    val showPreviewImageScreen by remember {
+        cameraViewModel.showPreviewImageScreen
+    }
+    val showDocumentScanned by remember {
+        cameraViewModel.showDocumentsScanned
+    }
+
+    val galleryLauncher: ManagedActivityResultLauncher<PickVisualMediaRequest, Uri?> = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia(),
+        onResult = { uri ->
+            uri?.let {
+                cameraViewModel.setImageUriFromGallery(it)
+            }
+        }
+    )
+
+    //Configure cameraX
+    val lensFacing = CameraSelector.LENS_FACING_BACK
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val preview = Preview.Builder().build()
+    val previewView = remember { PreviewView(context) }
+    val imageCapture: ImageCapture = remember { ImageCapture.Builder().build() }
+    val cameraSelector = CameraSelector
+        .Builder()
+        .requireLensFacing(lensFacing)
+        .build()
+
+    LaunchedEffect(lensFacing) {
+        val cameraProvider = context.getCameraProvider()
+        cameraProvider.unbindAll()
+        cameraProvider.bindToLifecycle(
+            lifecycleOwner,
+            cameraSelector,
+            preview,
+            imageCapture
+        )
+
+        preview.setSurfaceProvider(previewView.surfaceProvider)
+    }
 
     val documentScannerOptions = GmsDocumentScannerOptions.Builder()
         .setScannerMode(GmsDocumentScannerOptions.SCANNER_MODE_FULL)
@@ -68,55 +124,6 @@ fun CameraScreen(
         )
         .build()
 
-
-    val cameraController = remember {
-        LifecycleCameraController(localContext).apply {
-            setEnabledUseCases(
-                CameraController.IMAGE_CAPTURE or
-                        CameraController.VIDEO_CAPTURE
-            )
-            cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
-        }
-    }
-
-    CameraScreen(
-        cameraViewModel = cameraViewModel,
-        admobViewModel = admobViewModel,
-        cameraController = cameraController,
-        localContext = localContext,
-        activity = activity,
-        documentScannerOptions = documentScannerOptions,
-        navigateToPreview = { uri ->
-            navigateToPreview(uri)
-        },
-        navigateToAnalyzer = navigateToAnalyzer
-    )
-}
-
-@Composable
-fun CameraScreen(
-    cameraViewModel: CameraViewModel,
-    admobViewModel: AdmobViewModel,
-    cameraController: LifecycleCameraController,
-    localContext: Context,
-    activity: Activity,
-    documentScannerOptions: GmsDocumentScannerOptions,
-    navigateToPreview: (uri: List<Uri>) -> Unit,
-    navigateToAnalyzer: (uris: List<Uri>) -> Unit
-) {
-    val showPreview by remember { cameraViewModel.showPreview }
-
-    val galleryLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickVisualMedia(),
-        onResult = { uri ->
-            uri?.let {
-                cameraViewModel.setImageUriFromGallery(it)
-            }
-        }
-    )
-
-    val showDocumentScanned by remember { cameraViewModel.showDocumentsScanned }
-
     val scanner = GmsDocumentScanning.getClient(documentScannerOptions)
     val documentScannerLaunch = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartIntentSenderForResult(),
@@ -127,11 +134,58 @@ fun CameraScreen(
                 cameraViewModel.setUrisFromScanner(imageScanned)
 
                 result?.pdf?.let { pdf ->
-                    saveLocalPDF(localContext, pdf)
+                    saveLocalPDF(activity.applicationContext, pdf)
                 }
             }
         }
     )
+
+    CameraScreen(
+        showPreviewImageScreen = showPreviewImageScreen,
+        showDocumentScanned = showDocumentScanned,
+        previewView = previewView,
+        handleInterstitialAd = { admobViewModel.handleInterstitialAd(activity) },
+        navigateToPreview = { cameraViewModel.sentToPreview(navigateToPreview) },
+        navigateToAnalyzer = { cameraViewModel.sendToAnalyzer(navigateToAnalyzer) },
+        galleryLauncher = galleryLauncher,
+        onClickScanner = {
+            scanner.getStartScanIntent(activity)
+                .addOnSuccessListener {
+                    documentScannerLaunch.launch(
+                        IntentSenderRequest.Builder(it).build()
+                    )
+                }
+                .addOnFailureListener {
+                    Log.e("TextFromImage", it.printStackTrace().toString(), it)
+                }
+        },
+        onImageCaptured = {
+            cameraViewModel.takePhoto(
+                PhotoCapturedModel(
+                    imageCapture = imageCapture,
+                    outputDirectory = outputDirectory,
+                    executor = executor,
+                    onError = {
+                        Log.e("TextFromImage", it.printStackTrace().toString(), it)
+                    }
+                )
+            )
+        }
+    )
+}
+
+@Composable
+fun CameraScreen(
+    showPreviewImageScreen: Boolean,
+    showDocumentScanned: Boolean,
+    previewView: PreviewView,
+    handleInterstitialAd: () -> Unit,
+    navigateToPreview: () -> Unit,
+    navigateToAnalyzer: () -> Unit,
+    galleryLauncher: ManagedActivityResultLauncher<PickVisualMediaRequest, Uri?>,
+    onClickScanner: () -> Unit,
+    onImageCaptured: () -> Unit
+) {
 
     Scaffold { paddingValues ->
         Box(
@@ -140,11 +194,7 @@ fun CameraScreen(
                 .padding(paddingValues)
                 .consumeWindowInsets(paddingValues)
         ) {
-            CameraPreview(
-                controller = cameraController,
-                modifier = Modifier
-                    .fillMaxSize()
-            )
+            AndroidView({ previewView }, modifier = Modifier.fillMaxSize())
 
             Row(
                 modifier = Modifier
@@ -183,11 +233,7 @@ fun CameraScreen(
                         icon = Icons.Default.Camera,
                         buttonSize = 80.dp,
                         contentDescription = stringResource(id = R.string.content_description_take_photo),
-                        onClick = {
-                            cameraViewModel.onImageTaken(
-                                controller = cameraController
-                            )
-                        }
+                        onClick = { onImageCaptured() }
                     )
                 }
 
@@ -195,17 +241,7 @@ fun CameraScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     IconButton(
-                        onClick = {
-                            scanner.getStartScanIntent(activity)
-                                .addOnSuccessListener {
-                                    documentScannerLaunch.launch(
-                                        IntentSenderRequest.Builder(it).build()
-                                    )
-                                }
-                                .addOnFailureListener {
-
-                                }
-                        }
+                        onClick = { onClickScanner() }
                     ) {
                         Icon(
                             imageVector = Icons.Default.DocumentScanner,
@@ -223,13 +259,22 @@ fun CameraScreen(
                 }
             }
         }
-        if (showPreview) {
-            admobViewModel.handleInterstitialAd(activity)
-            cameraViewModel.sentToPreview(navigateToPreview)
+        if (showPreviewImageScreen) {
+            handleInterstitialAd()
+            navigateToPreview()
         }
         if (showDocumentScanned) {
-            admobViewModel.handleInterstitialAd(activity)
-            cameraViewModel.sendToAnalyzer(navigateToAnalyzer)
+            handleInterstitialAd()
+            navigateToAnalyzer()
         }
     }
 }
+
+private suspend fun Context.getCameraProvider(): ProcessCameraProvider =
+    suspendCoroutine { continuation ->
+        ProcessCameraProvider.getInstance(this).also { cameraProvider ->
+            cameraProvider.addListener({
+                continuation.resume(cameraProvider.get())
+            }, ContextCompat.getMainExecutor(this))
+        }
+    }
