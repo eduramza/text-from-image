@@ -7,17 +7,9 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.viewModels
-import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
-import androidx.core.view.WindowCompat
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.ViewModelStoreOwner
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
-import com.eduramza.cameratextconversor.domain.usecase.ShouldShowInterstitialAdUseCase
 import com.eduramza.cameratextconversor.navigation.SetupNavGraph
-import com.eduramza.cameratextconversor.presentation.camera.viewmodel.AdMobViewModelFactory
 import com.eduramza.cameratextconversor.presentation.theme.CameraTextConversorTheme
 
 class MainActivity : ComponentActivity() {
@@ -27,7 +19,6 @@ class MainActivity : ComponentActivity() {
         if (!hasPermission(baseContext)) {
             activityResultLauncher.launch(CAMERAX_PERMISSIONS)
         }
-//        WindowCompat.setDecorFitsSystemWindows(window, false)
 
         setContent {
             CameraTextConversorTheme(dynamicColor = false) {

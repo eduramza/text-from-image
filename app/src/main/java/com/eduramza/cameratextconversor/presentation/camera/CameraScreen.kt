@@ -6,6 +6,7 @@ import android.content.Context
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
 import androidx.camera.view.CameraController
@@ -43,10 +44,6 @@ import com.eduramza.cameratextconversor.presentation.AdmobViewModel
 import com.eduramza.cameratextconversor.presentation.camera.viewmodel.CameraViewModel
 import com.eduramza.cameratextconversor.presentation.components.RoundedIconButton
 import com.eduramza.cameratextconversor.saveLocalPDF
-import com.google.android.gms.ads.AdRequest
-import com.google.android.gms.ads.LoadAdError
-import com.google.android.gms.ads.interstitial.InterstitialAd
-import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.google.mlkit.vision.documentscanner.GmsDocumentScannerOptions
 import com.google.mlkit.vision.documentscanner.GmsDocumentScanning
 import com.google.mlkit.vision.documentscanner.GmsDocumentScanningResult
@@ -59,10 +56,6 @@ fun CameraScreen(
     admobViewModel: AdmobViewModel
 ) {
     val localContext = LocalContext.current.applicationContext
-//    val factory = CameraViewModelFactory(
-//        LocalContext.current.applicationContext as Application,
-//        ShouldShowInterstitialAdUseCase()
-//    )
     val cameraViewModel: CameraViewModel = viewModel()
 
     val documentScannerOptions = GmsDocumentScannerOptions.Builder()
@@ -114,7 +107,7 @@ fun CameraScreen(
     val showPreview by remember { cameraViewModel.showPreview }
 
     val galleryLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent(),
+        contract = ActivityResultContracts.PickVisualMedia(),
         onResult = { uri ->
             uri?.let {
                 cameraViewModel.setImageUriFromGallery(it)
@@ -166,7 +159,9 @@ fun CameraScreen(
                 ) {
                     IconButton(
                         onClick = {
-                            galleryLauncher.launch("image/*")
+                            galleryLauncher.launch(
+                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                            )
                         }
                     ) {
                         Icon(
@@ -182,7 +177,7 @@ fun CameraScreen(
                     )
                 }
 
-                Box(modifier = Modifier.padding(bottom = 56.dp)){
+                Box(modifier = Modifier.padding(bottom = 56.dp)) {
                     RoundedIconButton(
                         color = MaterialTheme.colorScheme.onPrimary,
                         icon = Icons.Default.Camera,
@@ -232,7 +227,7 @@ fun CameraScreen(
             admobViewModel.handleInterstitialAd(activity)
             cameraViewModel.sentToPreview(navigateToPreview)
         }
-        if (showDocumentScanned){
+        if (showDocumentScanned) {
             admobViewModel.handleInterstitialAd(activity)
             cameraViewModel.sendToAnalyzer(navigateToAnalyzer)
         }

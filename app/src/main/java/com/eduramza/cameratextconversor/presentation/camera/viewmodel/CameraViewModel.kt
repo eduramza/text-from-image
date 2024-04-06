@@ -59,12 +59,17 @@ class CameraViewModel(
                     val matrix = Matrix().apply {
                         postRotate(image.imageInfo.rotationDegrees.toFloat())
                     }
+
+                    // Ensure the dimensions are correct after rotation
+                    val rotatedWidth = if (image.imageInfo.rotationDegrees == 90 || image.imageInfo.rotationDegrees == 270) image.height else image.width
+                    val rotatedHeight = if (image.imageInfo.rotationDegrees == 90 || image.imageInfo.rotationDegrees == 270) image.width else image.height
+
                     val rotatedBitmap = Bitmap.createBitmap(
                         image.toBitmap(),
                         0,
                         0,
-                        image.width,
-                        image.height,
+                        rotatedWidth,
+                        rotatedHeight,
                         matrix,
                         true
                     )
@@ -77,6 +82,7 @@ class CameraViewModel(
             }
         )
     }
+
 
     fun sentToPreview(navigateToPreview: (uri: List<Uri>) -> Unit) {
         imageUri.value?.let{
