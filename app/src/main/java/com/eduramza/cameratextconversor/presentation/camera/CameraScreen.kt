@@ -4,7 +4,7 @@ import android.app.Activity
 import android.app.Activity.RESULT_OK
 import android.content.Context
 import android.net.Uri
-import android.util.Log
+import android.widget.Toast
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
@@ -46,13 +46,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eduramza.cameratextconversor.R
-import com.eduramza.cameratextconversor.presentation.AdmobViewModel
 import com.eduramza.cameratextconversor.presentation.camera.viewmodel.CameraViewModel
-import com.eduramza.cameratextconversor.presentation.camera.viewmodel.PhotoCapturedModel
+import com.eduramza.cameratextconversor.presentation.camera.viewmodel.CameraViewModelFactory
+import com.eduramza.cameratextconversor.presentation.camera.viewmodel.NavigateEffect
 import com.eduramza.cameratextconversor.presentation.components.RoundedIconButton
 import com.eduramza.cameratextconversor.saveLocalPDF
+import com.eduramza.cameratextconversor.utils.SingleEventEffect
 import com.google.mlkit.vision.documentscanner.GmsDocumentScannerOptions
 import com.google.mlkit.vision.documentscanner.GmsDocumentScanning
 import com.google.mlkit.vision.documentscanner.GmsDocumentScanningResult
@@ -66,28 +68,9 @@ fun CameraScreen(
     activity: Activity,
     navigateToPreview: (uri: List<Uri>) -> Unit,
     navigateToAnalyzer: (uris: List<Uri>) -> Unit,
-    admobViewModel: AdmobViewModel,
     outputDirectory: File,
     executor: ExecutorService,
 ) {
-
-    val cameraViewModel: CameraViewModel = viewModel()
-
-    val showPreviewImageScreen by remember {
-        cameraViewModel.showPreviewImageScreen
-    }
-    val showDocumentScanned by remember {
-        cameraViewModel.showDocumentsScanned
-    }
-
-    val galleryLauncher: ManagedActivityResultLauncher<PickVisualMediaRequest, Uri?> = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickVisualMedia(),
-        onResult = { uri ->
-            uri?.let {
-                cameraViewModel.setImageUriFromGallery(it)
-            }
-        }
-    )
 
     //Configure cameraX
     val lensFacing = CameraSelector.LENS_FACING_BACK
@@ -124,7 +107,36 @@ fun CameraScreen(
         )
         .build()
 
-    val scanner = GmsDocumentScanning.getClient(documentScannerOptions)
+    val scanner = GmsDocumentScanning.getClient(documentScannerOptions).getStartScanIntent(activity)
+
+    val factory = CameraViewModelFactory(
+        imageCapture = imageCapture,
+        outputDirectory = outputDirectory,
+        executor = executor,
+        scannerSender = scanner
+    )
+
+    val cameraViewModel: CameraViewModel = viewModel<CameraViewModel>(
+        viewModelStoreOwner = activity as ViewModelStoreOwner,
+        factory = factory
+    )
+
+    val showPreviewImageScreen by remember {
+        cameraViewModel.showPreviewImageScreen
+    }
+    val showDocumentScanned by remember {
+        cameraViewModel.showDocumentsScanned
+    }
+
+    val galleryLauncher: ManagedActivityResultLauncher<PickVisualMediaRequest, Uri?> = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia(),
+        onResult = { uri ->
+            uri?.let {
+                cameraViewModel.setImageUriFromGallery(it)
+            }
+        }
+    )
+
     val documentScannerLaunch = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartIntentSenderForResult(),
         onResult = {
@@ -140,51 +152,43 @@ fun CameraScreen(
         }
     )
 
-    CameraScreen(
+    SingleEventEffect(sideEffectFlow = cameraViewModel.sideEffectFlow){ navigateEffect ->
+        when(navigateEffect){
+            is NavigateEffect.NavigateToAnalyzerImage -> {
+                navigateToAnalyzer(navigateEffect.uris)
+            }
+            is NavigateEffect.NavigateToPreviewImage -> navigateToPreview(navigateEffect.uris)
+            is NavigateEffect.OpenDocumentScanner -> {
+                documentScannerLaunch.launch(
+                    IntentSenderRequest.Builder(navigateEffect.senderRequest).build()
+                )
+            }
+            is NavigateEffect.ShowError -> {
+                //TODO Update Errors
+                Toast.makeText(context, navigateEffect.message, Toast.LENGTH_LONG).show()
+            }
+            NavigateEffect.OpenGallery -> {
+                galleryLauncher.launch(
+                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                )
+            }
+        }
+    }
+
+    CameraScreenContent(
         showPreviewImageScreen = showPreviewImageScreen,
         showDocumentScanned = showDocumentScanned,
         previewView = previewView,
-        handleInterstitialAd = { admobViewModel.handleInterstitialAd(activity) },
-        navigateToPreview = { cameraViewModel.sentToPreview(navigateToPreview) },
-        navigateToAnalyzer = { cameraViewModel.sendToAnalyzer(navigateToAnalyzer) },
-        galleryLauncher = galleryLauncher,
-        onClickScanner = {
-            scanner.getStartScanIntent(activity)
-                .addOnSuccessListener {
-                    documentScannerLaunch.launch(
-                        IntentSenderRequest.Builder(it).build()
-                    )
-                }
-                .addOnFailureListener {
-                    Log.e("TextFromImage", it.printStackTrace().toString(), it)
-                }
-        },
-        onImageCaptured = {
-            cameraViewModel.takePhoto(
-                PhotoCapturedModel(
-                    imageCapture = imageCapture,
-                    outputDirectory = outputDirectory,
-                    executor = executor,
-                    onError = {
-                        Log.e("TextFromImage", it.printStackTrace().toString(), it)
-                    }
-                )
-            )
-        }
+        onIntentReceived = { cameraViewModel.processIntent(it) }
     )
 }
 
 @Composable
-fun CameraScreen(
+fun CameraScreenContent(
     showPreviewImageScreen: Boolean,
     showDocumentScanned: Boolean,
     previewView: PreviewView,
-    handleInterstitialAd: () -> Unit,
-    navigateToPreview: () -> Unit,
-    navigateToAnalyzer: () -> Unit,
-    galleryLauncher: ManagedActivityResultLauncher<PickVisualMediaRequest, Uri?>,
-    onClickScanner: () -> Unit,
-    onImageCaptured: () -> Unit
+    onIntentReceived: (CameraIntent) -> Unit
 ) {
 
     Scaffold { paddingValues ->
@@ -209,9 +213,7 @@ fun CameraScreen(
                 ) {
                     IconButton(
                         onClick = {
-                            galleryLauncher.launch(
-                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                            )
+                            onIntentReceived(CameraIntent.OnClickGallery)
                         }
                     ) {
                         Icon(
@@ -233,7 +235,7 @@ fun CameraScreen(
                         icon = Icons.Default.Camera,
                         buttonSize = 80.dp,
                         contentDescription = stringResource(id = R.string.content_description_take_photo),
-                        onClick = { onImageCaptured() }
+                        onClick = { onIntentReceived(CameraIntent.OnImageCaptured) }
                     )
                 }
 
@@ -241,7 +243,7 @@ fun CameraScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     IconButton(
-                        onClick = { onClickScanner() }
+                        onClick = { onIntentReceived(CameraIntent.OnClickScanner) }
                     ) {
                         Icon(
                             imageVector = Icons.Default.DocumentScanner,
@@ -260,12 +262,10 @@ fun CameraScreen(
             }
         }
         if (showPreviewImageScreen) {
-            handleInterstitialAd()
-            navigateToPreview()
+            onIntentReceived(CameraIntent.NavigateToPreviewImage)
         }
         if (showDocumentScanned) {
-            handleInterstitialAd()
-            navigateToAnalyzer()
+            onIntentReceived(CameraIntent.NavigateToAnalyzerImage)
         }
     }
 }

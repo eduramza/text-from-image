@@ -46,12 +46,13 @@ fun SetupNavGraph(
     ) {
         cameraRoute(
             activity = activity,
-            admobViewModel = admobViewModel,
             navigateToPreview = {
+                admobViewModel.handleInterstitialAd(activity)
                 setShouldShowActions(true)
                 navController.navigate(AppScreenNavigation.Preview.previewArgs(it))
             },
             navigateToAnalyzer = {
+                admobViewModel.handleInterstitialAd(activity)
                 navController.navigate(AppScreenNavigation.Analyzer.resumeArgs(it))
             },
             outputDirectory = outputDirectory,
@@ -83,14 +84,12 @@ fun NavGraphBuilder.cameraRoute(
     activity: Activity,
     navigateToPreview: (uri: List<Uri>) -> Unit,
     navigateToAnalyzer: (uri: List<Uri>) -> Unit,
-    admobViewModel: AdmobViewModel,
     outputDirectory: File,
     executor: ExecutorService,
 ) {
     composable(route = AppScreenNavigation.Camera.route) {
         CameraScreen(
             activity = activity,
-            admobViewModel = admobViewModel,
             navigateToPreview = navigateToPreview,
             navigateToAnalyzer = navigateToAnalyzer,
             outputDirectory = outputDirectory,
