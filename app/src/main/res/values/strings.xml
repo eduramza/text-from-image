@@ -23,4 +23,6 @@
 
 
     <string name="camera_screen_document">Scan \nDocuments</string>
+    <string name="error_something_went_wrong">Something went wrong! %s</string>
+    <string name="error_cant_open_scanner">We cannot open the Scanner, please, update your Play Store and try again</string>
 </resources>

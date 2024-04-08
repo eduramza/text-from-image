@@ -2,12 +2,17 @@ package com.eduramza.cameratextconversor.presentation.camera.viewmodel
 
 import android.content.IntentSender
 import android.net.Uri
+import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
+import androidx.camera.view.PreviewView
 import androidx.compose.runtime.mutableStateOf
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.eduramza.cameratextconversor.R
 import com.eduramza.cameratextconversor.presentation.camera.CameraIntent
+import com.eduramza.cameratextconversor.utils.UiText
 import com.google.android.gms.tasks.Task
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -19,10 +24,10 @@ import java.util.Locale
 import java.util.concurrent.ExecutorService
 
 class CameraViewModel(
-    private val imageCapture: ImageCapture,
     private val outputDirectory: File,
     private val executor: ExecutorService,
-    private val scannerSender: Task<IntentSender>
+    private val scannerSender: Task<IntentSender>,
+    private val cameraController: CameraController,
 ) : ViewModel() {
     val showPreviewImageScreen = mutableStateOf(false)
     private val imageUri = mutableStateOf<Uri?>(null)
@@ -33,6 +38,21 @@ class CameraViewModel(
     private val navigateChannel = Channel<NavigateEffect>(capacity = Channel.BUFFERED)
     val sideEffectFlow: Flow<NavigateEffect>
         get() = navigateChannel.receiveAsFlow()
+
+    private val errorChannel = Channel<UiText>()
+    val errors = errorChannel.receiveAsFlow()
+
+    fun openCamera(
+        lifecycleOwner: LifecycleOwner,
+        cameraSelector: CameraSelector,
+        previewView: PreviewView
+    ) { // A new function to start the camera
+        cameraController.startCamera(lifecycleOwner, cameraSelector, previewView)
+    }
+
+    fun closeCamera() { // Optionally, if you want to close the camera later
+        cameraController.stopCamera()
+    }
 
     fun processIntent(intent: CameraIntent) {
         when (intent) {
@@ -64,12 +84,20 @@ class CameraViewModel(
                 sendNavigation(NavigateEffect.OpenDocumentScanner(it))
             }
             .addOnFailureListener {
-                sendNavigation(
-                    NavigateEffect.ShowError(
-                        "Um erro ocorreu ao tentar abrir o Scanner de documentos: ${it.message}"
-                    )
+                sendError(
+                    res = R.string.error_cant_open_scanner,
+                    ""
                 )
             }
+    }
+
+    private fun sendError(res: Int, args: Any) = viewModelScope.launch {
+        errorChannel.send(
+            UiText.StringResource(
+                resId = res,
+                args
+            )
+        )
     }
 
     private fun sendNavigation(navigateEffect: NavigateEffect) =
@@ -77,7 +105,10 @@ class CameraViewModel(
             try {
                 navigateChannel.send(navigateEffect)
             } catch (ex: Exception){
-                navigateChannel.send(NavigateEffect.ShowError("Something went wrong! ${ex.message}"))
+                sendError(
+                    res = R.string.error_something_went_wrong,
+                    ex.message.orEmpty()
+                )
             }
         }
 
@@ -102,12 +133,15 @@ class CameraViewModel(
 
         val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
 
-        imageCapture.takePicture(
+        cameraController.takePicture(
             outputOptions,
             executor,
             object : ImageCapture.OnImageSavedCallback {
                 override fun onError(exception: ImageCaptureException) {
-                    sendNavigation(NavigateEffect.ShowError(exception.printStackTrace().toString()))
+                    sendError(
+                        res = R.string.error_something_went_wrong,
+                        exception.message.orEmpty()
+                    )
                 }
 
                 override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {

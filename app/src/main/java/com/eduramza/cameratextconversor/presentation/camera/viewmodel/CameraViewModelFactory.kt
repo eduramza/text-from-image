@@ -27,16 +27,16 @@ class AdMobViewModelFactory(
 
 
 class CameraViewModelFactory (
-    private val imageCapture: ImageCapture,
     private val outputDirectory: File,
     private val executor: ExecutorService,
     private val scannerSender: Task<IntentSender>,
+    private val cameraController: CameraController,
 ) : ViewModelProvider.Factory{
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(CameraViewModel::class.java)){
             return CameraViewModel(
-                imageCapture, outputDirectory, executor, scannerSender
+                outputDirectory, executor, scannerSender, cameraController
             ) as T
         } else{
             throw IllegalArgumentException("Unknown ViewModel class")

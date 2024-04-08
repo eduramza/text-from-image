@@ -20,7 +20,7 @@ object FileUtils {
     private const val PAGE_WIDTH = 794
     private const val PAGE_HEIGHT = 1123
 
-    fun saveTextToTxt(analyzedText: String, appName: String, context: Context) {
+    fun saveTextToTxt(analyzedText: String, appName: String, context: Context, onSuccess: (File) -> Unit, onError: (Exception) -> Unit) {
         try {
             val outputDir = getOutputDirectory(context, appName)
             val currentDate = getCurrentDateTime()
@@ -32,12 +32,10 @@ object FileUtils {
             }
 
             updateMedia(context, file)
-
-            Log.d("SaveFile", "Arquivo salvo em ${file.parentFile}")
-            Toast.makeText(context, "File saved with success", Toast.LENGTH_SHORT).show()
+            onSuccess(file)
         } catch (ex: Exception) {
             Log.e("SaveFile", ex.message.toString())
-            Toast.makeText(context, "File was not saved", Toast.LENGTH_SHORT).show()
+            onError(ex)
         }
     }
 

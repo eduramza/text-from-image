@@ -116,7 +116,9 @@ fun NavGraphBuilder.analyzerRoute(
         ProvideWindowInsets(windowInsetsAnimationsEnabled = true) {
             AnalyzerScreen(
                 imageUri = imageUris,
-                navigateToPreview = navigateToPreview,
+                navigateToPreview = {
+                    navigateToPreview(imageUris)
+                },
                 navigateToCamera = navigateToCamera
             )
         }
