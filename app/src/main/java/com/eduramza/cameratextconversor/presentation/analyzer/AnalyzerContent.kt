@@ -36,10 +36,16 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.ClipboardManager
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.res.stringResource
@@ -63,6 +69,7 @@ fun AnalyzerContent(
     onIntentReceiver: (AnalyzerIntent) -> Unit
 ) {
     val scrollState = rememberScrollState()
+    var menuOffset by remember { mutableStateOf(Offset.Zero) }
     Scaffold(
         snackbarHost = {
             SnackbarHost(hostState = snackbarHostState)
@@ -119,9 +126,9 @@ fun AnalyzerContent(
                         )
                     }
                     Box(
-//                        modifier = Modifier.onGloballyPositioned { coord ->
-//                        menuOffset = coord.positionInRoot()
-//                    }
+                        modifier = Modifier.onGloballyPositioned { coord ->
+                        menuOffset = coord.positionInRoot()
+                    }
                     ) {
                         DropdownMenu(
                             expanded = isDropDownExpanded,
@@ -185,7 +192,8 @@ fun AnalyzerContent(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .padding(horizontal = 16.dp)
-                                .defaultMinSize(minHeight = 500.dp),
+                                .padding(bottom = 8.dp)
+                                .defaultMinSize(minHeight = 300.dp),
                             icon = {
                                 Icon(
                                     imageVector = Icons.Default.ContentCopy,

@@ -34,19 +34,23 @@ class ImageAnalyzerViewModel(
     private var listSize = 0
 
     fun processIntent(intent: AnalyzerIntent) {
-        when(intent){
+        when (intent) {
             AnalyzerIntent.NavigateToCamera -> {
                 sendNavigation(AnalyzerNavigation.GoToCamera)
             }
+
             AnalyzerIntent.NavigateToPreview -> {
                 sendNavigation(AnalyzerNavigation.GoToPreview)
             }
+
             AnalyzerIntent.OnChangeDropDownState -> {
-                isDropdownDownloadVisible.value = !isDropdownDownloadVisible.value
+                changeDropDownState()
             }
+
             is AnalyzerIntent.OnEditText -> {
                 editedText(intent.text)
             }
+
             is AnalyzerIntent.OnSaveResultToPDF -> saveToPDF()
             is AnalyzerIntent.OnSaveResultToTXT -> saveToTxt()
             is AnalyzerIntent.OnShareContent -> shareContent()
@@ -55,32 +59,34 @@ class ImageAnalyzerViewModel(
     }
 
     private fun saveToPDF() {
-            sendNavigation(
-                AnalyzerNavigation.GoToSavePDF(
-                    onError = {
-                        sendError(
-                            res = R.string.error_something_went_wrong,
-                            it.message.orEmpty()
-                        )
-                    }
-                )
+        changeDropDownState()
+        sendNavigation(
+            AnalyzerNavigation.GoToSavePDF(
+                onError = {
+                    sendError(
+                        res = R.string.error_something_went_wrong,
+                        it.message.orEmpty()
+                    )
+                }
             )
+        )
     }
 
-    private fun saveToTxt(){
-            sendNavigation(
-                AnalyzerNavigation.GoToSaveTxt(
-                    onError = {
-                        sendError(
-                            res = R.string.error_something_went_wrong,
-                            it.message.orEmpty()
-                        )
-                    }
-                )
+    private fun saveToTxt() {
+        changeDropDownState()
+        sendNavigation(
+            AnalyzerNavigation.GoToSaveTxt(
+                onError = {
+                    sendError(
+                        res = R.string.error_something_went_wrong,
+                        it.message.orEmpty()
+                    )
+                }
             )
+        )
     }
 
-    private fun shareContent(){
+    private fun shareContent() {
         sendNavigation(
             AnalyzerNavigation.GoToShareContent(
                 onError = {
@@ -97,7 +103,7 @@ class ImageAnalyzerViewModel(
         viewModelScope.launch {
             try {
                 navigateChannel.send(navigateEffect)
-            } catch (ex: Exception){
+            } catch (ex: Exception) {
                 sendError(R.string.error_something_went_wrong, ex.message.orEmpty())
             }
         }
@@ -129,7 +135,7 @@ class ImageAnalyzerViewModel(
         bitmaps: List<Bitmap>
     ) {
         viewModelScope.launch {
-            if (textAnalyzed.value.isEmpty()){
+            if (textAnalyzed.value.isEmpty()) {
                 isAnalyzing.value = true
 
                 val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
@@ -154,6 +160,10 @@ class ImageAnalyzerViewModel(
                 isAnalyzing.value = false
             }
         }
+    }
+
+    private fun changeDropDownState() {
+        isDropdownDownloadVisible.value = !isDropdownDownloadVisible.value
     }
 
 }
