@@ -7,37 +7,39 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.viewModels
-import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
-import androidx.core.view.WindowCompat
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.ViewModelStoreOwner
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
-import com.eduramza.cameratextconversor.domain.usecase.ShouldShowInterstitialAdUseCase
+import com.eduramza.cameratextconversor.R
 import com.eduramza.cameratextconversor.navigation.SetupNavGraph
-import com.eduramza.cameratextconversor.presentation.camera.viewmodel.AdMobViewModelFactory
 import com.eduramza.cameratextconversor.presentation.theme.CameraTextConversorTheme
+import java.io.File
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 
 class MainActivity : ComponentActivity() {
+
+    private lateinit var outputDirectory: File
+    private lateinit var cameraExecutor: ExecutorService
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (!hasPermission(baseContext)) {
             activityResultLauncher.launch(CAMERAX_PERMISSIONS)
         }
-        WindowCompat.setDecorFitsSystemWindows(window, false)
 
         setContent {
             CameraTextConversorTheme(dynamicColor = false) {
                 val navController = rememberNavController()
                 SetupNavGraph(
                     activity = this,
-                    navController = navController
+                    outputDirectory = outputDirectory,
+                    executor = cameraExecutor,
+                    navController = navController,
                 )
             }
         }
+        outputDirectory = getOutputDirectory()
+        cameraExecutor = Executors.newSingleThreadExecutor()
     }
 
     private val activityResultLauncher =
@@ -56,9 +58,6 @@ class MainActivity : ComponentActivity() {
         }
 
     companion object {
-        private const val TAG = "CameraTextConversor"
-        private const val FILENAME_FORMAT = "dd-MM-yyyy-HH-mm-ss-SSS"
-
         private val CAMERAX_PERMISSIONS = mutableListOf(
             android.Manifest.permission.CAMERA
         ).apply {
@@ -70,5 +69,18 @@ class MainActivity : ComponentActivity() {
         fun hasPermission(context: Context) = CAMERAX_PERMISSIONS.all {
             ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
         }
+    }
+
+    private fun getOutputDirectory(): File {
+        val mediaDir = externalMediaDirs.firstOrNull()?.let {
+            File(it, resources.getString(R.string.app_name)).apply { mkdirs() }
+        }
+
+        return if (mediaDir != null && mediaDir.exists()) mediaDir else filesDir
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        cameraExecutor.shutdown()
     }
 }

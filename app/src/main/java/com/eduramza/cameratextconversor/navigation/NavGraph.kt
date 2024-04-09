@@ -20,11 +20,15 @@ import com.eduramza.cameratextconversor.presentation.camera.CameraScreen
 import com.eduramza.cameratextconversor.presentation.camera.viewmodel.AdMobViewModelFactory
 import com.eduramza.cameratextconversor.presentation.preview.PreviewImageScreen
 import com.google.accompanist.insets.ProvideWindowInsets
+import java.io.File
+import java.util.concurrent.ExecutorService
 
 @Composable
 fun SetupNavGraph(
     activity: Activity,
     navController: NavHostController,
+    outputDirectory: File,
+    executor: ExecutorService,
 ) {
     val (shouldShowActions, setShouldShowActions) = remember { mutableStateOf(false) }
     val factory = AdMobViewModelFactory(
@@ -42,14 +46,17 @@ fun SetupNavGraph(
     ) {
         cameraRoute(
             activity = activity,
-            admobViewModel = admobViewModel,
             navigateToPreview = {
+                admobViewModel.handleInterstitialAd(activity)
                 setShouldShowActions(true)
                 navController.navigate(AppScreenNavigation.Preview.previewArgs(it))
             },
             navigateToAnalyzer = {
+                admobViewModel.handleInterstitialAd(activity)
                 navController.navigate(AppScreenNavigation.Analyzer.resumeArgs(it))
-            }
+            },
+            outputDirectory = outputDirectory,
+            executor = executor
         )
         previewRoute(
             navigateToAnalyzer = {
@@ -77,14 +84,17 @@ fun NavGraphBuilder.cameraRoute(
     activity: Activity,
     navigateToPreview: (uri: List<Uri>) -> Unit,
     navigateToAnalyzer: (uri: List<Uri>) -> Unit,
-    admobViewModel: AdmobViewModel
+    outputDirectory: File,
+    executor: ExecutorService,
 ) {
     composable(route = AppScreenNavigation.Camera.route) {
         CameraScreen(
             activity = activity,
-            admobViewModel = admobViewModel,
             navigateToPreview = navigateToPreview,
-            navigateToAnalyzer = navigateToAnalyzer)
+            navigateToAnalyzer = navigateToAnalyzer,
+            outputDirectory = outputDirectory,
+            executor = executor
+        )
     }
 
 }
@@ -106,7 +116,9 @@ fun NavGraphBuilder.analyzerRoute(
         ProvideWindowInsets(windowInsetsAnimationsEnabled = true) {
             AnalyzerScreen(
                 imageUri = imageUris,
-                navigateToPreview = navigateToPreview,
+                navigateToPreview = {
+                    navigateToPreview(imageUris)
+                },
                 navigateToCamera = navigateToCamera
             )
         }
