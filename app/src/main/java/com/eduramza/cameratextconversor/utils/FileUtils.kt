@@ -7,7 +7,6 @@ import android.graphics.Paint
 import android.graphics.pdf.PdfDocument
 import android.media.MediaScannerConnection
 import android.util.Log
-import android.widget.Toast
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
