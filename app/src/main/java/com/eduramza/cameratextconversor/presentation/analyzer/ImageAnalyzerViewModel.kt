@@ -153,11 +153,9 @@ class ImageAnalyzerViewModel(
                                 it.message.orEmpty()
                             )
                         }
-                        .addOnCompleteListener {
-                            imagesAnalyzed.value.plus(bitmap)
-                        }
                 }
                 isAnalyzing.value = false
+                imagesAnalyzed.value = bitmaps
             }
         }
     }
