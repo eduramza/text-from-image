@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "890964724010",
+    "project_id": "text-from-image-5d7ea",
+    "storage_bucket": "text-from-image-5d7ea.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:890964724010:android:b52f8d6cdf2ed5dea0f653",
+        "android_client_info": {
+          "package_name": "com.eduramza.cameratextconversor"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCKQt1jpkrP70i8ALQIHwKHV_WgMuPKdeI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
