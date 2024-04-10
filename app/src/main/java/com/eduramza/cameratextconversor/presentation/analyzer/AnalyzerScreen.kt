@@ -19,11 +19,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eduramza.cameratextconversor.R
 import com.eduramza.cameratextconversor.getUriForFile
 import com.eduramza.cameratextconversor.loadBitmap
-import com.eduramza.cameratextconversor.utils.FileUtils
-import com.eduramza.cameratextconversor.utils.ShareUtils
+import com.eduramza.cameratextconversor.presentation.analyzer.viewmodel.AnalyzerIntent
+import com.eduramza.cameratextconversor.presentation.analyzer.viewmodel.AnalyzerNavigation
+import com.eduramza.cameratextconversor.presentation.analyzer.viewmodel.ImageAnalyzerViewModel
 import com.eduramza.cameratextconversor.utils.SingleEventEffect
 import kotlinx.coroutines.launch
-
 
 @Composable
 fun AnalyzerScreen(
@@ -64,99 +64,78 @@ fun AnalyzerScreen(
     LaunchedEffect(key1 = snackbarHostState) {
         imageAnalyzerViewModel.errors.collect { error ->
             snackbarHostState.showSnackbar(
-                message = error.asString(context)
+                message = error
             )
         }
     }
 
     SingleEventEffect(
-        sideEffectFlow = imageAnalyzerViewModel.sideEffectFlow,
+        sideEffectFlow = imageAnalyzerViewModel.navigateEffect,
         collector = { navigation ->
             when (navigation) {
                 AnalyzerNavigation.GoToCamera -> navigateToCamera()
                 is AnalyzerNavigation.GoToPreview -> navigateToPreview()
 
                 is AnalyzerNavigation.GoToSavePDF -> {
-                    FileUtils.saveTextToPdf(
-                        textFromImage = analyzedText,
-                        appName = context.getString(R.string.app_name),
-                        bitmapList = analyzedImages,
-                        context = context,
-                        onSuccess = { file ->
-                            scope.launch {
-                                val result = snackbarHostState.showSnackbar(
-                                    message = titleSnackbar,
-                                    actionLabel = actionSnackbar,
-                                    withDismissAction = false,
-                                    duration = SnackbarDuration.Indefinite
+                    scope.launch {
+                        val result = snackbarHostState.showSnackbar(
+                            message = titleSnackbar,
+                            actionLabel = actionSnackbar,
+                            withDismissAction = false,
+                            duration = SnackbarDuration.Indefinite
+                        )
+
+                        when (result) {
+                            SnackbarResult.ActionPerformed -> {
+                                val fileUri = getUriForFile(context, navigation.file)
+                                val intent = Intent(Intent.ACTION_VIEW)
+                                intent.setDataAndType(
+                                    fileUri,
+                                    "application/pdf"
                                 )
-
-                                when (result) {
-                                    SnackbarResult.ActionPerformed -> {
-                                        val fileUri = getUriForFile(context, file)
-                                        val intent = Intent(Intent.ACTION_VIEW)
-                                        intent.setDataAndType(
-                                            fileUri,
-                                            "application/pdf"
-                                        )
-                                        intent.flags =
-                                            Intent.FLAG_GRANT_READ_URI_PERMISSION
-                                        context.startActivity(intent)
-                                    }
-
-                                    SnackbarResult.Dismissed -> {
-                                        /* Handle snackbar dismissed */
-                                    }
-                                }
+                                intent.flags =
+                                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                                context.startActivity(intent)
                             }
-                        },
-                        onError = { navigation.onError }
-                    )
+
+                            SnackbarResult.Dismissed -> {
+                                /* Handle snackbar dismissed */
+                            }
+                        }
+                    }
                 }
 
                 is AnalyzerNavigation.GoToSaveTxt -> {
-                    FileUtils.saveTextToTxt(
-                        analyzedText = analyzedText,
-                        appName = context.getString(R.string.app_name),
-                        context = context,
-                        onSuccess = { file ->
-                            scope.launch {
-                                val result = snackbarHostState.showSnackbar(
-                                    message = titleSnackbar,
-                                    actionLabel = actionSnackbar,
-                                    withDismissAction = false,
-                                    duration = SnackbarDuration.Indefinite
+                    scope.launch {
+                        val result = snackbarHostState.showSnackbar(
+                            message = titleSnackbar,
+                            actionLabel = actionSnackbar,
+                            withDismissAction = false,
+                            duration = SnackbarDuration.Indefinite
+                        )
+
+                        when (result) {
+                            SnackbarResult.ActionPerformed -> {
+                                val fileUri = getUriForFile(context, navigation.file)
+                                val intent = Intent(Intent.ACTION_VIEW)
+                                intent.setDataAndType(
+                                    fileUri,
+                                    "application/pdf"
                                 )
-
-                                when (result) {
-                                    SnackbarResult.ActionPerformed -> {
-                                        val fileUri = getUriForFile(context, file)
-                                        val intent = Intent(Intent.ACTION_VIEW)
-                                        intent.setDataAndType(
-                                            fileUri,
-                                            "application/pdf"
-                                        )
-                                        intent.flags =
-                                            Intent.FLAG_GRANT_READ_URI_PERMISSION
-                                        context.startActivity(intent)
-                                    }
-
-                                    SnackbarResult.Dismissed -> {
-                                        /* Handle snackbar dismissed */
-                                    }
-                                }
+                                intent.flags =
+                                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                                context.startActivity(intent)
                             }
-                        },
-                        onError = { navigation.onError }
-                    )
+
+                            SnackbarResult.Dismissed -> {
+                                /* Handle snackbar dismissed */
+                            }
+                        }
+                    }
                 }
 
-                is AnalyzerNavigation.GoToShareContent -> {
-                    ShareUtils.shareContent(
-                        analyzedText = analyzedText,
-                        context = context,
-                        onError = { navigation.onError }
-                    )
+                is AnalyzerNavigation.ContentShared -> {
+                    //TODO: Do something here?
                 }
             }
         }

@@ -53,6 +53,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.eduramza.cameratextconversor.R
+import com.eduramza.cameratextconversor.presentation.analyzer.viewmodel.AnalyzerIntent
 import com.eduramza.cameratextconversor.presentation.components.AdmobBanner
 import com.eduramza.cameratextconversor.presentation.components.OutlinedTextFieldWithIconButton
 import com.google.android.gms.ads.AdSize
