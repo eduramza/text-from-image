@@ -1,4 +1,4 @@
-package com.eduramza.cameratextconversor.presentation.analyzer
+package com.eduramza.cameratextconversor.presentation.analyzer.viewmodel
 
 import android.graphics.Bitmap
 
@@ -11,4 +11,5 @@ sealed class AnalyzerIntent {
     data object OnChangeDropDownState: AnalyzerIntent()
     data object OnSaveResultToPDF: AnalyzerIntent()
     data object OnSaveResultToTXT: AnalyzerIntent()
+
 }
