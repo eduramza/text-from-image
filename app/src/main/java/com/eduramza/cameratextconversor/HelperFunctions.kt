@@ -13,16 +13,6 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 
-fun createTempImageFile(context: Context, prefix: String = "image", suffix: String = ".jpg"): File {
-    val file = File.createTempFile(prefix, suffix, context.cacheDir)
-    Log.d("FileProviderDebug", "Created file: ${file.absolutePath}")
-    return file
-}
-
-fun saveBitmapToFile(bitmap: Bitmap, file: File) {
-    bitmap.compress(Bitmap.CompressFormat.JPEG, 90, FileOutputStream(file))
-}
-
 fun getUriForFile(context: Context, file: File): Uri {
     val uri = FileProvider.getUriForFile(context, "com.eduramza.cameratextconversor.provider", file)
     Log.d("FileProviderDebug", "Generated Uri: $uri")

@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
+import kotlinx.coroutines.tasks.await
 
 interface ImageAnalysisManager {
     suspend fun processImage(image: Bitmap): String
@@ -16,14 +17,9 @@ class ImageAnalysisManagerImpl: ImageAnalysisManager{
     override suspend fun processImage(image: Bitmap): String {
         val inputImage: InputImage = InputImage.fromBitmap(image, 0)
 
-        val result = recognizer.process(inputImage)
-            .addOnCompleteListener {
-                if (it.isSuccessful){
-                    it.result.text
-                }
-            }
-
-        return result.result.text
+        return recognizer.process(inputImage)
+            .await()
+            .text
     }
 
 }

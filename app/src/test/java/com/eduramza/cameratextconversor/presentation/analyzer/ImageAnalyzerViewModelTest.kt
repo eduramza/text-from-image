@@ -38,11 +38,9 @@ class ImageAnalyzerViewModelTest {
     private val imageAnalysisManager: ImageAnalysisManager = mockk()
 
     private val mainThreadSurrogate = newSingleThreadContext("UI thread")
-    private lateinit var observer: Observer<AnalyzerNavigation>
 
     @Before
     fun setUp() {
-        observer = mockk(relaxed = true)
         Dispatchers.setMain(mainThreadSurrogate)
         viewModel = ImageAnalyzerViewModel(fileManager, stringProvider, imageAnalysisManager)
     }

@@ -136,12 +136,11 @@ class ImageAnalyzerViewModel(
 
             listSize = bitmaps.size
             bitmaps.forEach { bitmap ->
-                setAnalyzedText(
-                    imageAnalysisManager.processImage(bitmap)
-                )
+                val recognizedText = imageAnalysisManager.processImage(bitmap)
+                setAnalyzedText(recognizedText)
             }
-            isAnalyzing.value = false
             imagesAnalyzed.value = bitmaps
+            isAnalyzing.value = false
         }
     }
 

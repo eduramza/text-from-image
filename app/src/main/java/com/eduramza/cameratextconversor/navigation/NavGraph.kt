@@ -17,7 +17,7 @@ import com.eduramza.cameratextconversor.domain.usecase.ShouldShowInterstitialAdU
 import com.eduramza.cameratextconversor.presentation.AdmobViewModel
 import com.eduramza.cameratextconversor.presentation.analyzer.AnalyzerScreen
 import com.eduramza.cameratextconversor.presentation.camera.CameraScreen
-import com.eduramza.cameratextconversor.presentation.camera.viewmodel.AdMobViewModelFactory
+import com.eduramza.cameratextconversor.di.AdMobViewModelFactory
 import com.eduramza.cameratextconversor.presentation.preview.PreviewImageScreen
 import com.google.accompanist.insets.ProvideWindowInsets
 import java.io.File

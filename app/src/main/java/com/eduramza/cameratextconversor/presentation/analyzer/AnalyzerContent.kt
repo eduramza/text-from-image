@@ -62,7 +62,6 @@ import com.google.android.gms.ads.AdSize
 @Composable
 fun AnalyzerContent(
     analyzedText: String,
-    isAnalyzing: Boolean,
     isDropDownExpanded: Boolean,
     isShowingAds: Boolean = true,
     snackbarHostState: SnackbarHostState,
@@ -128,8 +127,8 @@ fun AnalyzerContent(
                     }
                     Box(
                         modifier = Modifier.onGloballyPositioned { coord ->
-                        menuOffset = coord.positionInRoot()
-                    }
+                            menuOffset = coord.positionInRoot()
+                        }
                     ) {
                         DropdownMenu(
                             expanded = isDropDownExpanded,
@@ -170,49 +169,44 @@ fun AnalyzerContent(
             )
         },
         content = { innerPadding ->
-
-            if (isAnalyzing) {
-                CircularProgressIndicator()
-            } else {
-                Box(modifier = Modifier.fillMaxSize()) {
-                    Column(
+            Box(modifier = Modifier.fillMaxSize()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .imePadding()
+                        .navigationBarsPadding()
+                        .padding(
+                            top = innerPadding.calculateTopPadding(),
+                            bottom = innerPadding.calculateBottomPadding() + AdSize.BANNER.height.dp
+                        )
+                        .verticalScroll(state = scrollState)
+                ) {
+                    OutlinedTextFieldWithIconButton(
+                        value = analyzedText,
+                        onValueChange = { onIntentReceiver(AnalyzerIntent.OnEditText(it)) },
+                        label = { Text(text = stringResource(id = R.string.label_analyzed_text_field)) },
                         modifier = Modifier
                             .fillMaxSize()
-                            .imePadding()
-                            .navigationBarsPadding()
-                            .padding(
-                                top = innerPadding.calculateTopPadding(),
-                                bottom = innerPadding.calculateBottomPadding() + AdSize.BANNER.height.dp
+                            .padding(horizontal = 16.dp)
+                            .padding(bottom = 8.dp)
+                            .defaultMinSize(minHeight = 300.dp),
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Default.ContentCopy,
+                                contentDescription = "Copy Content",
                             )
-                            .verticalScroll(state = scrollState)
-                    ) {
-                        OutlinedTextFieldWithIconButton(
-                            value = analyzedText,
-                            onValueChange = { onIntentReceiver(AnalyzerIntent.OnEditText(it)) },
-                            label = { Text(text = stringResource(id = R.string.label_analyzed_text_field)) },
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(horizontal = 16.dp)
-                                .padding(bottom = 8.dp)
-                                .defaultMinSize(minHeight = 300.dp),
-                            icon = {
-                                Icon(
-                                    imageVector = Icons.Default.ContentCopy,
-                                    contentDescription = "Copy Content",
-                                )
-                            },
-                            onClickIcon = { clipboardManager.setText(AnnotatedString(analyzedText)) }
-                        )
-                    }
+                        },
+                        onClickIcon = { clipboardManager.setText(AnnotatedString(analyzedText)) }
+                    )
+                }
 
-                    if (isShowingAds){
-                        AdmobBanner(
-                            modifier = Modifier
-                                .align(Alignment.BottomCenter)
-                                .fillMaxWidth()
-                                .padding(bottom = innerPadding.calculateBottomPadding())
-                        )
-                    }
+                if (isShowingAds) {
+                    AdmobBanner(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .fillMaxWidth()
+                            .padding(bottom = innerPadding.calculateBottomPadding())
+                    )
                 }
             }
         }
@@ -226,7 +220,6 @@ fun previewAnalyzerContent() {
     val clipboardManager: ClipboardManager = LocalClipboardManager.current
     AnalyzerContent(
         analyzedText = "assadasdsadasdasdasdasdsadsa \n asdsadasd",
-        isAnalyzing = false,
         isDropDownExpanded = false,
         isShowingAds = false,
         snackbarHostState = snackbarHostState,
