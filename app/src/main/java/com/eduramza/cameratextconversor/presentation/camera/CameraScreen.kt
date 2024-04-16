@@ -20,10 +20,11 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eduramza.cameratextconversor.presentation.camera.viewmodel.CameraControllerImpl
 import com.eduramza.cameratextconversor.presentation.camera.viewmodel.CameraViewModel
-import com.eduramza.cameratextconversor.presentation.camera.viewmodel.CameraViewModelFactory
+import com.eduramza.cameratextconversor.di.CameraViewModelFactory
 import com.eduramza.cameratextconversor.presentation.camera.viewmodel.NavigateEffect
 import com.eduramza.cameratextconversor.saveLocalPDF
 import com.eduramza.cameratextconversor.utils.SingleEventEffect
+import com.eduramza.cameratextconversor.utils.StringProviderImpl
 import com.google.mlkit.vision.documentscanner.GmsDocumentScannerOptions
 import com.google.mlkit.vision.documentscanner.GmsDocumentScanning
 import com.google.mlkit.vision.documentscanner.GmsDocumentScanningResult
@@ -58,6 +59,7 @@ fun CameraScreen(
         )
         .build()
     val scanner = GmsDocumentScanning.getClient(documentScannerOptions).getStartScanIntent(activity)
+    val stringProvider = StringProviderImpl(context)
 
     val cameraController = remember { CameraControllerImpl(context) }
     val cameraViewModel: CameraViewModel = viewModel(
@@ -65,7 +67,8 @@ fun CameraScreen(
             cameraController = cameraController,
             outputDirectory = outputDirectory,
             executor = executor,
-            scannerSender = scanner
+            scannerSender = scanner,
+            stringProvider = stringProvider
         )
     )
 
@@ -82,6 +85,10 @@ fun CameraScreen(
     }
     val showDocumentScanned by remember {
         cameraViewModel.showDocumentsScanned
+    }
+
+    val imagesUri by remember {
+        cameraViewModel.imagesUri
     }
 
     val galleryLauncher: ManagedActivityResultLauncher<PickVisualMediaRequest, Uri?> = rememberLauncherForActivityResult(
@@ -111,9 +118,9 @@ fun CameraScreen(
     SingleEventEffect(sideEffectFlow = cameraViewModel.sideEffectFlow){ navigateEffect ->
         when(navigateEffect){
             is NavigateEffect.NavigateToAnalyzerImage -> {
-                navigateToAnalyzer(navigateEffect.uris)
+                navigateToAnalyzer(imagesUri)
             }
-            is NavigateEffect.NavigateToPreviewImage -> navigateToPreview(navigateEffect.uris)
+            is NavigateEffect.NavigateToPreviewImage -> navigateToPreview(imagesUri)
             is NavigateEffect.OpenDocumentScanner -> {
                 documentScannerLaunch.launch(
                     IntentSenderRequest.Builder(navigateEffect.senderRequest).build()

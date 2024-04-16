@@ -12,7 +12,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.eduramza.cameratextconversor.R
 import com.eduramza.cameratextconversor.presentation.camera.CameraIntent
-import com.eduramza.cameratextconversor.utils.UiText
+import com.eduramza.cameratextconversor.utils.StringProvider
 import com.google.android.gms.tasks.Task
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -28,18 +28,19 @@ class CameraViewModel(
     private val executor: ExecutorService,
     private val scannerSender: Task<IntentSender>,
     private val cameraController: CameraController,
+    private val stringProvider: StringProvider,
 ) : ViewModel() {
     val showPreviewImageScreen = mutableStateOf(false)
-    private val imageUri = mutableStateOf<Uri?>(null)
 
     val showDocumentsScanned = mutableStateOf(false)
-    private val scansUri = mutableStateOf<List<Uri>>(emptyList())
+    var imagesUri = mutableStateOf<List<Uri>>(emptyList())
+        private set
 
     private val navigateChannel = Channel<NavigateEffect>(capacity = Channel.BUFFERED)
     val sideEffectFlow: Flow<NavigateEffect>
         get() = navigateChannel.receiveAsFlow()
 
-    private val errorChannel = Channel<UiText>()
+    private val errorChannel = Channel<String>()
     val errors = errorChannel.receiveAsFlow()
 
     fun openCamera(
@@ -55,27 +56,27 @@ class CameraViewModel(
     }
 
     fun processIntent(intent: CameraIntent) {
-        when (intent) {
-            CameraIntent.NavigateToAnalyzerImage -> {
-                sendToAnalyzer()
-            }
+            when (intent) {
+                CameraIntent.NavigateToAnalyzerImage -> {
+                    sendToAnalyzer()
+                }
 
-            CameraIntent.NavigateToPreviewImage -> {
-                sentToPreview()
-            }
+                CameraIntent.NavigateToPreviewImage -> {
+                    sentToPreview()
+                }
 
-            CameraIntent.OnClickScanner -> {
-                openScanner()
-            }
+                CameraIntent.OnClickScanner -> {
+                    openScanner()
+                }
 
-            CameraIntent.OnImageCaptured -> {
-                takePhoto()
-            }
+                CameraIntent.OnImageCaptured -> {
+                    takePhoto()
+                }
 
-            CameraIntent.OnClickGallery -> {
-                sendNavigation(NavigateEffect.OpenGallery)
+                CameraIntent.OnClickGallery -> {
+                    sendNavigation(NavigateEffect.OpenGallery)
+                }
             }
-        }
     }
 
     private fun openScanner() {
@@ -93,32 +94,23 @@ class CameraViewModel(
 
     private fun sendError(res: Int, args: Any) = viewModelScope.launch {
         errorChannel.send(
-            UiText.StringResource(
-                resId = res,
-                args
-            )
+            stringProvider.getStringWithArgs(res, args)
         )
     }
 
     private fun sendNavigation(navigateEffect: NavigateEffect) =
         viewModelScope.launch {
-            try {
-                navigateChannel.send(navigateEffect)
-            } catch (ex: Exception){
-                sendError(
-                    res = R.string.error_something_went_wrong,
-                    ex.message.orEmpty()
-                )
-            }
+            navigateChannel.send(navigateEffect)
         }
 
+
     fun setImageUriFromGallery(galleryImage: Uri) {
-        imageUri.value = galleryImage
+        imagesUri.value = listOf(galleryImage)
         showPreviewImageScreen.value = true
     }
 
     fun setUrisFromScanner(scansResult: List<Uri>) {
-        scansUri.value = scansResult
+        imagesUri.value = scansResult
         showDocumentsScanned.value = true
     }
 
@@ -146,21 +138,21 @@ class CameraViewModel(
 
                 override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
                     val savedUri = Uri.fromFile(photoFile)
-                    imageUri.value = savedUri
+                    imagesUri.value = listOf(savedUri)
                     showPreviewImageScreen.value = true
                 }
             })
     }
 
     private fun sentToPreview() {
-        imageUri.value?.let {
+        imagesUri.value.apply {
             showPreviewImageScreen.value = false
-            sendNavigation(NavigateEffect.NavigateToPreviewImage(listOf(it)))
+            sendNavigation(NavigateEffect.NavigateToPreviewImage)
         }
     }
 
     private fun sendToAnalyzer() {
-        sendNavigation(NavigateEffect.NavigateToAnalyzerImage(scansUri.value))
+        sendNavigation(NavigateEffect.NavigateToAnalyzerImage)
         showDocumentsScanned.value = false
     }
 }
