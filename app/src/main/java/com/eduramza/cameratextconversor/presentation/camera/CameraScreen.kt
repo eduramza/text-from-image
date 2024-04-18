@@ -2,6 +2,8 @@ package com.eduramza.cameratextconversor.presentation.camera
 
 import android.app.Activity
 import android.app.Activity.RESULT_OK
+import android.content.Context
+import android.content.IntentSender
 import android.net.Uri
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -18,13 +20,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.eduramza.cameratextconversor.data.analytics.FirebaseAnalyticsLogger
+import com.eduramza.cameratextconversor.data.analytics.FirebaseAnalyticsLoggerImpl
+import com.eduramza.cameratextconversor.di.CameraViewModelFactory
 import com.eduramza.cameratextconversor.presentation.camera.viewmodel.CameraControllerImpl
 import com.eduramza.cameratextconversor.presentation.camera.viewmodel.CameraViewModel
-import com.eduramza.cameratextconversor.di.CameraViewModelFactory
 import com.eduramza.cameratextconversor.presentation.camera.viewmodel.NavigateEffect
 import com.eduramza.cameratextconversor.saveLocalPDF
 import com.eduramza.cameratextconversor.utils.SingleEventEffect
 import com.eduramza.cameratextconversor.utils.StringProviderImpl
+import com.google.android.gms.tasks.Task
 import com.google.mlkit.vision.documentscanner.GmsDocumentScannerOptions
 import com.google.mlkit.vision.documentscanner.GmsDocumentScanning
 import com.google.mlkit.vision.documentscanner.GmsDocumentScanningResult
@@ -59,18 +64,8 @@ fun CameraScreen(
         )
         .build()
     val scanner = GmsDocumentScanning.getClient(documentScannerOptions).getStartScanIntent(activity)
-    val stringProvider = StringProviderImpl(context)
-
-    val cameraController = remember { CameraControllerImpl(context) }
-    val cameraViewModel: CameraViewModel = viewModel(
-        factory = CameraViewModelFactory(
-            cameraController = cameraController,
-            outputDirectory = outputDirectory,
-            executor = executor,
-            scannerSender = scanner,
-            stringProvider = stringProvider
-        )
-    )
+    val cameraViewModel: CameraViewModel =
+        bindCameraViewModel(context, outputDirectory, executor, scanner)
 
     LaunchedEffect(Unit) {
         cameraViewModel.openCamera(lifecycleOwner, cameraSelector, previewView)
@@ -91,14 +86,15 @@ fun CameraScreen(
         cameraViewModel.imagesUri
     }
 
-    val galleryLauncher: ManagedActivityResultLauncher<PickVisualMediaRequest, Uri?> = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickVisualMedia(),
-        onResult = { uri ->
-            uri?.let {
-                cameraViewModel.setImageUriFromGallery(it)
+    val galleryLauncher: ManagedActivityResultLauncher<PickVisualMediaRequest, Uri?> =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.PickVisualMedia(),
+            onResult = { uri ->
+                uri?.let {
+                    cameraViewModel.setImageUriFromGallery(it)
+                }
             }
-        }
-    )
+        )
 
     val documentScannerLaunch = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartIntentSenderForResult(),
@@ -115,17 +111,19 @@ fun CameraScreen(
         }
     )
 
-    SingleEventEffect(sideEffectFlow = cameraViewModel.sideEffectFlow){ navigateEffect ->
-        when(navigateEffect){
+    SingleEventEffect(sideEffectFlow = cameraViewModel.sideEffectFlow) { navigateEffect ->
+        when (navigateEffect) {
             is NavigateEffect.NavigateToAnalyzerImage -> {
                 navigateToAnalyzer(imagesUri)
             }
+
             is NavigateEffect.NavigateToPreviewImage -> navigateToPreview(imagesUri)
             is NavigateEffect.OpenDocumentScanner -> {
                 documentScannerLaunch.launch(
                     IntentSenderRequest.Builder(navigateEffect.senderRequest).build()
                 )
             }
+
             NavigateEffect.OpenGallery -> {
                 galleryLauncher.launch(
                     PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
@@ -139,5 +137,28 @@ fun CameraScreen(
         showDocumentScanned = showDocumentScanned,
         previewView = previewView,
         onIntentReceived = { cameraViewModel.processIntent(it) }
+    )
+}
+
+@Composable
+private fun bindCameraViewModel(
+    context: Context,
+    outputDirectory: File,
+    executor: ExecutorService,
+    scanner: Task<IntentSender>
+): CameraViewModel {
+    val stringProvider = StringProviderImpl(context)
+
+    val cameraController = remember { CameraControllerImpl(context) }
+    val analytics: FirebaseAnalyticsLogger = FirebaseAnalyticsLoggerImpl()
+    return viewModel<CameraViewModel>(
+        factory = CameraViewModelFactory(
+            cameraController = cameraController,
+            outputDirectory = outputDirectory,
+            executor = executor,
+            scannerSender = scanner,
+            stringProvider = stringProvider,
+            analytics = analytics
+        )
     )
 }

@@ -65,7 +65,6 @@ fun AnalyzerContent(
     isDropDownExpanded: Boolean,
     isShowingAds: Boolean = true,
     snackbarHostState: SnackbarHostState,
-    clipboardManager: ClipboardManager,
     onIntentReceiver: (AnalyzerIntent) -> Unit
 ) {
     val scrollState = rememberScrollState()
@@ -196,7 +195,7 @@ fun AnalyzerContent(
                                 contentDescription = "Copy Content",
                             )
                         },
-                        onClickIcon = { clipboardManager.setText(AnnotatedString(analyzedText)) }
+                        onClickIcon = { onIntentReceiver(AnalyzerIntent.CopyContent) }
                     )
                 }
 
@@ -223,7 +222,6 @@ fun previewAnalyzerContent() {
         isDropDownExpanded = false,
         isShowingAds = false,
         snackbarHostState = snackbarHostState,
-        clipboardManager = clipboardManager,
         onIntentReceiver = { }
     )
 }

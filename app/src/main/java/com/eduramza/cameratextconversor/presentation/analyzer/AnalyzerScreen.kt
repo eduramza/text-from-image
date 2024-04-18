@@ -23,6 +23,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eduramza.cameratextconversor.R
+import com.eduramza.cameratextconversor.data.analytics.FirebaseAnalyticsLogger
+import com.eduramza.cameratextconversor.data.analytics.FirebaseAnalyticsLoggerImpl
 import com.eduramza.cameratextconversor.di.AnalyzerViewModelFactory
 import com.eduramza.cameratextconversor.getUriForFile
 import com.eduramza.cameratextconversor.loadBitmap
@@ -44,7 +46,6 @@ fun AnalyzerScreen(
     navigateToPreview: () -> Unit,
     navigateToCamera: () -> Unit,
 ) {
-    val clipboardManager: ClipboardManager = LocalClipboardManager.current
     val context = LocalContext.current
     val scrollState = rememberScrollState()
 
@@ -153,16 +154,16 @@ fun AnalyzerScreen(
         }
     )
 
-    if (isLoading){
-        Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()){
+    if (isLoading) {
+        Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
             CircularProgressIndicator()
         }
     } else {
+        imageAnalyzerViewModel.showScreen()
         AnalyzerContent(
             analyzedText = analyzedText,
             isDropDownExpanded = dropDownExpanded,
             snackbarHostState = snackbarHostState,
-            clipboardManager = clipboardManager,
             onIntentReceiver = { imageAnalyzerViewModel.processIntent(it) }
         )
     }
@@ -175,12 +176,16 @@ private fun bindViewModel(
     val fileManager: FileManager = FileManagerImpl(context)
     val stringProvider: StringProvider = StringProviderImpl(context)
     val imageAnalysisManager: ImageAnalysisManager = ImageAnalysisManagerImpl()
+    val analytics: FirebaseAnalyticsLogger = FirebaseAnalyticsLoggerImpl()
+    val clipboardManager: ClipboardManager = LocalClipboardManager.current
 
     return viewModel<ImageAnalyzerViewModel>(
         factory = AnalyzerViewModelFactory(
             fileManager = fileManager,
             stringProvider = stringProvider,
-            imageAnalysisManager = imageAnalysisManager
+            imageAnalysisManager = imageAnalysisManager,
+            analyticsLogger = analytics,
+            clipboardManager = clipboardManager
         )
     )
 }
