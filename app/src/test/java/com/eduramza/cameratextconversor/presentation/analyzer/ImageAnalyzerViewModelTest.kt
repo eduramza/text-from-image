@@ -1,7 +1,9 @@
 package com.eduramza.cameratextconversor.presentation.analyzer
 
 import android.graphics.Bitmap
+import androidx.compose.ui.platform.ClipboardManager
 import androidx.lifecycle.Observer
+import com.eduramza.cameratextconversor.data.analytics.FirebaseAnalyticsLogger
 import com.eduramza.cameratextconversor.presentation.analyzer.viewmodel.AnalyzerIntent
 import com.eduramza.cameratextconversor.presentation.analyzer.viewmodel.AnalyzerNavigation
 import com.eduramza.cameratextconversor.presentation.analyzer.viewmodel.ImageAnalysisManager
@@ -36,13 +38,21 @@ class ImageAnalyzerViewModelTest {
     private val fileManager: FileManager = mockk()
     private val stringProvider: StringProvider = mockk()
     private val imageAnalysisManager: ImageAnalysisManager = mockk()
+    private val analyticsLogger: FirebaseAnalyticsLogger = mockk()
+    private val clipboardManager: ClipboardManager = mockk()
 
     private val mainThreadSurrogate = newSingleThreadContext("UI thread")
 
     @Before
     fun setUp() {
         Dispatchers.setMain(mainThreadSurrogate)
-        viewModel = ImageAnalyzerViewModel(fileManager, stringProvider, imageAnalysisManager)
+        viewModel = ImageAnalyzerViewModel(
+            fileManager,
+            stringProvider,
+            imageAnalysisManager,
+            analyticsLogger,
+            clipboardManager
+        )
     }
 
     @After

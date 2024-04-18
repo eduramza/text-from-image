@@ -1,6 +1,7 @@
 package com.eduramza.cameratextconversor.presentation.camera.viewmodel
 
 import android.content.IntentSender
+import com.eduramza.cameratextconversor.data.analytics.FirebaseAnalyticsLogger
 import com.eduramza.cameratextconversor.presentation.camera.CameraIntent
 import com.eduramza.cameratextconversor.utils.StringProvider
 import com.google.android.gms.tasks.OnSuccessListener
@@ -31,8 +32,9 @@ import java.util.concurrent.ExecutorService
 
 @OptIn(ExperimentalCoroutinesApi::class, DelicateCoroutinesApi::class)
 @RunWith(MockitoJUnitRunner::class)
-class CameraViewModelTest{
+class CameraViewModelTest {
     private lateinit var viewModel: CameraViewModel
+
     @Mock
     lateinit var outputDirectory: File
 
@@ -46,19 +48,29 @@ class CameraViewModelTest{
     lateinit var cameraController: CameraController
 
     @Mock
-    lateinit var  stringProvider: StringProvider
+    lateinit var stringProvider: StringProvider
+
+    @Mock
+    lateinit var analyticsLogger: FirebaseAnalyticsLogger
 
     private val mainThreadSurrogate = newSingleThreadContext("UI thread")
 
     @Before
-    fun setUp(){
+    fun setUp() {
         Dispatchers.setMain(mainThreadSurrogate)
         MockitoAnnotations.initMocks(this)
-        viewModel = CameraViewModel(outputDirectory, executor, scannerSender, cameraController, stringProvider)
+        viewModel = CameraViewModel(
+            outputDirectory,
+            executor,
+            scannerSender,
+            cameraController,
+            stringProvider,
+            analyticsLogger
+        )
     }
 
     @After
-    fun tearDown(){
+    fun tearDown() {
         Dispatchers.resetMain()
         mainThreadSurrogate.close()
     }
@@ -82,22 +94,23 @@ class CameraViewModelTest{
         }
 
     @Test
-    fun should_call_OpenDocumentScanner_when_intent_OnClickScanner() = runBlocking(Dispatchers.Main) {
-        // Given
-        val mockIntentSender = mockk<IntentSender>()
-        `when`(scannerSender.addOnSuccessListener(any())).thenAnswer { invocation ->
-            val listener = invocation.getArgument(0) as OnSuccessListener<IntentSender>
-            listener.onSuccess(mockIntentSender)
-            mock(Task::class.java)
+    fun should_call_OpenDocumentScanner_when_intent_OnClickScanner() =
+        runBlocking(Dispatchers.Main) {
+            // Given
+            val mockIntentSender = mockk<IntentSender>()
+            `when`(scannerSender.addOnSuccessListener(any())).thenAnswer { invocation ->
+                val listener = invocation.getArgument(0) as OnSuccessListener<IntentSender>
+                listener.onSuccess(mockIntentSender)
+                mock(Task::class.java)
+            }
+
+            // When
+            viewModel.processIntent(CameraIntent.OnClickScanner)
+
+            // Then
+            val navigateEffect = viewModel.sideEffectFlow.first()
+            assert(navigateEffect is NavigateEffect.OpenDocumentScanner)
         }
-
-        // When
-        viewModel.processIntent(CameraIntent.OnClickScanner)
-
-        // Then
-        val navigateEffect = viewModel.sideEffectFlow.first()
-        assert(navigateEffect is NavigateEffect.OpenDocumentScanner)
-    }
 
     @Test
     fun should_navigate_OpenGallery_when_intent_OnClickGallery() = runBlocking(Dispatchers.Main) {
@@ -106,8 +119,6 @@ class CameraViewModelTest{
         assertFalse(viewModel.showDocumentsScanned.value)
         assertEquals(NavigateEffect.OpenGallery, viewModel.sideEffectFlow.first())
     }
-
-
 
 
 }
