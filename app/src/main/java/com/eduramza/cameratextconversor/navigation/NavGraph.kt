@@ -13,6 +13,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.eduramza.cameratextconversor.data.analytics.FirebaseAnalyticsLoggerImpl
 import com.eduramza.cameratextconversor.domain.usecase.ShouldShowInterstitialAdUseCase
 import com.eduramza.cameratextconversor.presentation.AdmobViewModel
 import com.eduramza.cameratextconversor.presentation.analyzer.AnalyzerScreen
@@ -33,7 +34,8 @@ fun SetupNavGraph(
     val (shouldShowActions, setShouldShowActions) = remember { mutableStateOf(false) }
     val factory = AdMobViewModelFactory(
         activity.application,
-        ShouldShowInterstitialAdUseCase()
+        ShouldShowInterstitialAdUseCase(),
+        FirebaseAnalyticsLoggerImpl()
     )
     val admobViewModel = viewModel<AdmobViewModel>(
         viewModelStoreOwner = activity as ViewModelStoreOwner,

@@ -12,4 +12,6 @@ sealed class AnalyzerIntent {
     data object OnSaveResultToPDF: AnalyzerIntent()
     data object OnSaveResultToTXT: AnalyzerIntent()
 
+    data object CopyContent: AnalyzerIntent()
+
 }

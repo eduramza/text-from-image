@@ -35,6 +35,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -51,8 +52,13 @@ import com.canhub.cropper.CropImageContractOptions
 import com.canhub.cropper.CropImageOptions
 import com.canhub.cropper.CropImageView
 import com.eduramza.cameratextconversor.R
+import com.eduramza.cameratextconversor.data.analytics.ConstantsAnalytics.Companion
+import com.eduramza.cameratextconversor.data.analytics.ConstantsAnalytics.Companion.CONTENT_BUTTON
+import com.eduramza.cameratextconversor.data.analytics.FirebaseAnalyticsLogger
+import com.eduramza.cameratextconversor.data.analytics.FirebaseAnalyticsLoggerImpl
 import com.eduramza.cameratextconversor.loadBitmap
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -69,6 +75,9 @@ fun PreviewImageScreen(
 
     var firstVisibleItemIndex by remember { mutableStateOf(0) }
     val listState = rememberLazyListState()
+
+    val analytics: FirebaseAnalyticsLogger = FirebaseAnalyticsLoggerImpl()
+    val scope = rememberCoroutineScope()
 
     LaunchedEffect(listState) {
         snapshotFlow {
@@ -92,7 +101,6 @@ fun PreviewImageScreen(
                 navigateToAnalyzer(listOf(uri))
             }
         }
-        // Handle error if resultCode is not RESULT_OK
     }
 
     Scaffold(
@@ -104,7 +112,17 @@ fun PreviewImageScreen(
                 ),
                 title = { Text(text = stringResource(id = R.string.title_preview)) },
                 navigationIcon = {
-                    IconButton(onClick = { navigateBack() }) {
+                    IconButton(onClick = {
+                        scope.launch {
+                            analytics.trackSelectContent(
+                                id = Companion.Preview.ID_BACK,
+                                itemName = Companion.Preview.ITEM_NAME_BACK,
+                                contentType = CONTENT_BUTTON,
+                                area = Companion.Preview.AREA
+                            )
+                        }
+                        navigateBack()
+                    }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",
@@ -130,8 +148,8 @@ fun PreviewImageScreen(
                     .fillMaxWidth()
                     .background(color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.6f)),
                 horizontalAlignment = Alignment.CenterHorizontally,
-            ){
-                itemsIndexed(imageUri){_, item: Uri ->
+            ) {
+                itemsIndexed(imageUri) { _, item: Uri ->
                     AsyncImage(
                         model = item,
                         contentDescription = null,
@@ -141,7 +159,13 @@ fun PreviewImageScreen(
                 }
             }
 
-            if (shouldShowActions){
+            if (shouldShowActions) {
+                scope.launch {
+                    analytics.trackScreenView(
+                        screenName = Companion.Preview.SCREEN_NAME,
+                        area = Companion.Preview.AREA
+                    )
+                }
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -151,7 +175,18 @@ fun PreviewImageScreen(
                 ) {
                     TextButton(
                         onClick = {
-                            launchCropActivity(imageUri[firstVisibleItemIndex], cropActivityResultLauncher)
+                            scope.launch {
+                                analytics.trackSelectContent(
+                                    id = Companion.Preview.ID_CROP,
+                                    itemName = Companion.Preview.ITEM_NAME_CROP,
+                                    contentType = CONTENT_BUTTON,
+                                    area = Companion.Preview.AREA
+                                )
+                            }
+                            launchCropActivity(
+                                imageUri[firstVisibleItemIndex],
+                                cropActivityResultLauncher
+                            )
                         },
                         modifier = Modifier
                             .fillMaxSize()
@@ -166,7 +201,17 @@ fun PreviewImageScreen(
                     }
 
                     Button(
-                        onClick = { navigateToAnalyzer(imageUri) },
+                        onClick = {
+                            scope.launch {
+                                analytics.trackSelectContent(
+                                    id = Companion.Preview.ID_ANALYZE,
+                                    itemName = Companion.Preview.ITEM_NAME_ANALYZE,
+                                    contentType = CONTENT_BUTTON,
+                                    area = Companion.Preview.AREA
+                                )
+                            }
+                            navigateToAnalyzer(imageUri)
+                        },
                         modifier = Modifier
                             .fillMaxSize()
                             .weight(1f)
@@ -178,6 +223,13 @@ fun PreviewImageScreen(
                         )
                     }
 
+                }
+            } else {
+                scope.launch {
+                    analytics.trackScreenView(
+                        screenName = Companion.Preview.SCREEN_NAME,
+                        area = Companion.Preview.AREA
+                    )
                 }
             }
         }

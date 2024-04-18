@@ -2,9 +2,13 @@ package com.eduramza.cameratextconversor.presentation.analyzer.viewmodel
 
 import android.graphics.Bitmap
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.platform.ClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.eduramza.cameratextconversor.R
+import com.eduramza.cameratextconversor.data.analytics.ConstantsAnalytics
+import com.eduramza.cameratextconversor.data.analytics.FirebaseAnalyticsLogger
 import com.eduramza.cameratextconversor.utils.FileManager
 import com.eduramza.cameratextconversor.utils.StringProvider
 import kotlinx.coroutines.Dispatchers
@@ -13,11 +17,14 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.eduramza.cameratextconversor.data.analytics.ConstantsAnalytics.Companion.Analyzer
 
 class ImageAnalyzerViewModel(
     private val fileManager: FileManager,
     private val stringProvider: StringProvider,
-    private val imageAnalysisManager: ImageAnalysisManager
+    private val imageAnalysisManager: ImageAnalysisManager,
+    private val analyticsLogger: FirebaseAnalyticsLogger,
+    private val clipboardManager: ClipboardManager,
 ) : ViewModel() {
     var textAnalyzed = mutableStateOf("")
         private set
@@ -40,18 +47,42 @@ class ImageAnalyzerViewModel(
     private var imageIndex = 0
     private var listSize = 0
 
+    fun showScreen() {
+        viewModelScope.launch {
+            analyticsLogger.trackScreenView(
+                screenName = Analyzer.SCREEN_NAME,
+                area = Analyzer.AREA
+            )
+        }
+    }
+
     fun processIntent(intent: AnalyzerIntent) {
         viewModelScope.launch {
             when (intent) {
                 AnalyzerIntent.NavigateToCamera -> {
+                    trackClick(
+                        Analyzer.ID_BACK,
+                        Analyzer.ITEM_NAME_BACK,
+                        ConstantsAnalytics.CONTENT_BUTTON
+                    )
                     sendNavigation(AnalyzerNavigation.GoToCamera)
                 }
 
                 AnalyzerIntent.NavigateToPreview -> {
+                    trackClick(
+                        Analyzer.ID_REVIEW,
+                        Analyzer.ITEM_NAME_REVIEW,
+                        ConstantsAnalytics.CONTENT_BUTTON
+                    )
                     sendNavigation(AnalyzerNavigation.GoToPreview)
                 }
 
                 AnalyzerIntent.OnChangeDropDownState -> {
+                    trackClick(
+                        Analyzer.ID_SAVE_CONTENT,
+                        Analyzer.ITEM_NAME_SAVE_CONTENT,
+                        ConstantsAnalytics.CONTENT_BUTTON
+                    )
                     changeDropDownState()
                 }
 
@@ -63,8 +94,18 @@ class ImageAnalyzerViewModel(
                 is AnalyzerIntent.OnSaveResultToTXT -> saveToTxt()
                 is AnalyzerIntent.OnShareContent -> shareContent()
                 is AnalyzerIntent.OnAnalyzeImages -> getTextFromEachImage(intent.images)
+                is AnalyzerIntent.CopyContent -> copyContent()
             }
         }
+    }
+
+    private fun copyContent(){
+        trackClick(
+            Analyzer.ID_COPY,
+            Analyzer.ITEM_NAME_COPY,
+            ConstantsAnalytics.CONTENT_BUTTON
+        )
+        clipboardManager.setText(AnnotatedString(textAnalyzed.value))
     }
 
     private suspend fun saveToPDF() {
@@ -73,6 +114,11 @@ class ImageAnalyzerViewModel(
             textFromImage = textAnalyzed.value,
             bitmapList = imagesAnalyzed.value,
         )?.let {
+            trackClick(
+                Analyzer.ID_SAVE_PDF,
+                Analyzer.ITEM_NAME_SAVE_PDF,
+                ConstantsAnalytics.CONTENT_BUTTON
+            )
             sendNavigation(AnalyzerNavigation.GoToSavePDF(it))
         } ?: run {
             sendError(
@@ -85,6 +131,11 @@ class ImageAnalyzerViewModel(
     private suspend fun saveToTxt() {
         changeDropDownState()
         fileManager.saveTextToTXT(textAnalyzed.value)?.let {
+            trackClick(
+                Analyzer.ID_SAVE_TXT,
+                Analyzer.ITEM_NAME_SAVE_TXT,
+                ConstantsAnalytics.CONTENT_BUTTON
+            )
             sendNavigation(AnalyzerNavigation.GoToSaveTxt(it))
         } ?: run {
             sendError(
@@ -97,6 +148,11 @@ class ImageAnalyzerViewModel(
     private suspend fun shareContent() {
         try {
             fileManager.shareContent(textAnalyzed.value)
+            trackClick(
+                Analyzer.ID_SHARE,
+                Analyzer.ITEM_NAME_SHARE,
+                ConstantsAnalytics.CONTENT_BUTTON
+            )
             sendNavigation(AnalyzerNavigation.ContentShared)
         } catch (ex: Exception) {
             sendError(
@@ -125,6 +181,11 @@ class ImageAnalyzerViewModel(
     }
 
     private fun editedText(input: String) {
+        trackClick(
+            Analyzer.ID_EDIT_TEXT,
+            Analyzer.ITEM_NAME_EDIT_TEXT,
+            ConstantsAnalytics.CONTENT_EDIT
+        )
         textAnalyzed.value = input
     }
 
@@ -146,6 +207,17 @@ class ImageAnalyzerViewModel(
 
     private fun changeDropDownState() {
         isDropdownDownloadVisible.value = !isDropdownDownloadVisible.value
+    }
+
+    private fun trackClick(id: String, itemName: String, contentType: String) {
+        viewModelScope.launch {
+            analyticsLogger.trackSelectContent(
+                id = id,
+                itemName = itemName,
+                contentType = contentType,
+                area = Analyzer.AREA
+            )
+        }
     }
 
 }
