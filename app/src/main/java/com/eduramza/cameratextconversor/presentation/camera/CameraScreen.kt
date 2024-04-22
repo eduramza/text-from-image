@@ -41,6 +41,7 @@ fun CameraScreen(
     activity: Activity,
     navigateToPreview: (uri: List<Uri>) -> Unit,
     navigateToAnalyzer: (uris: List<Uri>) -> Unit,
+    navigateToError: (message: String) -> Unit,
     outputDirectory: File,
     executor: ExecutorService,
 ) {
@@ -131,6 +132,12 @@ fun CameraScreen(
             }
         }
     }
+
+    SingleEventEffect(sideEffectFlow = cameraViewModel.errors, collector = { message ->
+        if (message.isNotBlank()){
+            navigateToError(message)
+        }
+    })
 
     CameraContent(
         showPreviewImageScreen = showPreviewImageScreen,
