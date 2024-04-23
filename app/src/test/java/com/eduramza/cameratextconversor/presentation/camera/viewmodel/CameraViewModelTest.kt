@@ -39,9 +39,6 @@ class CameraViewModelTest {
     lateinit var outputDirectory: File
 
     @Mock
-    lateinit var executor: ExecutorService
-
-    @Mock
     lateinit var scannerSender: Task<IntentSender>
 
     @Mock
@@ -61,7 +58,6 @@ class CameraViewModelTest {
         MockitoAnnotations.initMocks(this)
         viewModel = CameraViewModel(
             outputDirectory,
-            executor,
             scannerSender,
             cameraController,
             stringProvider,
