@@ -32,7 +32,6 @@ fun SetupNavGraph(
     activity: Activity,
     navController: NavHostController,
     outputDirectory: File,
-    executor: ExecutorService,
 ) {
     val (shouldShowActions, setShouldShowActions) = remember { mutableStateOf(false) }
     val factory = AdMobViewModelFactory(
@@ -63,8 +62,7 @@ fun SetupNavGraph(
             navigateToError = { error ->
                 navController.navigate(AppScreenNavigation.Error.errorArgs(error))
             },
-            outputDirectory = outputDirectory,
-            executor = executor
+            outputDirectory = outputDirectory
         )
         previewRoute(
             navigateToAnalyzer = {
@@ -101,7 +99,6 @@ fun NavGraphBuilder.cameraRoute(
     navigateToAnalyzer: (uri: List<Uri>) -> Unit,
     navigateToError: (message: String) -> Unit,
     outputDirectory: File,
-    executor: ExecutorService,
 ) {
     composable(route = AppScreenNavigation.Camera.route) {
         CameraScreen(
@@ -110,7 +107,6 @@ fun NavGraphBuilder.cameraRoute(
             navigateToAnalyzer = navigateToAnalyzer,
             navigateToError = navigateToError,
             outputDirectory = outputDirectory,
-            executor = executor
         )
     }
 

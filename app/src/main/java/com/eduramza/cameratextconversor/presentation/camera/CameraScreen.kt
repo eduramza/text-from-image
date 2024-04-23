@@ -43,7 +43,6 @@ fun CameraScreen(
     navigateToAnalyzer: (uris: List<Uri>) -> Unit,
     navigateToError: (message: String) -> Unit,
     outputDirectory: File,
-    executor: ExecutorService,
 ) {
 
     //Configure cameraX
@@ -66,7 +65,7 @@ fun CameraScreen(
         .build()
     val scanner = GmsDocumentScanning.getClient(documentScannerOptions).getStartScanIntent(activity)
     val cameraViewModel: CameraViewModel =
-        bindCameraViewModel(context, outputDirectory, executor, scanner)
+        bindCameraViewModel(context, outputDirectory, scanner)
 
     LaunchedEffect(Unit) {
         cameraViewModel.openCamera(lifecycleOwner, cameraSelector, previewView)
@@ -151,7 +150,6 @@ fun CameraScreen(
 private fun bindCameraViewModel(
     context: Context,
     outputDirectory: File,
-    executor: ExecutorService,
     scanner: Task<IntentSender>
 ): CameraViewModel {
     val stringProvider = StringProviderImpl(context)
@@ -162,7 +160,6 @@ private fun bindCameraViewModel(
         factory = CameraViewModelFactory(
             cameraController = cameraController,
             outputDirectory = outputDirectory,
-            executor = executor,
             scannerSender = scanner,
             stringProvider = stringProvider,
             analytics = analytics

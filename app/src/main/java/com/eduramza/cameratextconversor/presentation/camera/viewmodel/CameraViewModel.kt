@@ -25,10 +25,10 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 
 class CameraViewModel(
     private val outputDirectory: File,
-    private val executor: ExecutorService,
     private val scannerSender: Task<IntentSender>,
     private val cameraController: CameraController,
     private val stringProvider: StringProvider,
@@ -47,6 +47,8 @@ class CameraViewModel(
     private val errorChannel = Channel<String>()
     val errors = errorChannel.receiveAsFlow()
 
+    private val cameraExecutor = Executors.newSingleThreadExecutor()
+
     fun openCamera(
         lifecycleOwner: LifecycleOwner,
         cameraSelector: CameraSelector,
@@ -63,6 +65,11 @@ class CameraViewModel(
 
     fun closeCamera() { // Optionally, if you want to close the camera later
         cameraController.stopCamera()
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        cameraExecutor.shutdown()
     }
 
     fun processIntent(intent: CameraIntent) {
@@ -139,7 +146,7 @@ class CameraViewModel(
 
         cameraController.takePicture(
             outputOptions,
-            executor,
+            cameraExecutor,
             object : ImageCapture.OnImageSavedCallback {
                 override fun onError(exception: ImageCaptureException) {
                     sendError(
