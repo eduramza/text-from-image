@@ -32,7 +32,6 @@ class AdMobViewModelFactory(
 
 class CameraViewModelFactory(
     private val outputDirectory: File,
-    private val executor: ExecutorService,
     private val scannerSender: Task<IntentSender>,
     private val cameraController: CameraController,
     private val stringProvider: StringProvider,
@@ -43,7 +42,6 @@ class CameraViewModelFactory(
         if (modelClass.isAssignableFrom(CameraViewModel::class.java)) {
             return CameraViewModel(
                 outputDirectory,
-                executor,
                 scannerSender,
                 cameraController,
                 stringProvider,
