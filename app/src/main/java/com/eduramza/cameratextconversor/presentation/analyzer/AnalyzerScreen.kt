@@ -45,6 +45,7 @@ fun AnalyzerScreen(
     imageUri: List<Uri>,
     navigateToPreview: () -> Unit,
     navigateToCamera: () -> Unit,
+    navigateToError: (message: String) -> Unit
 ) {
     val context = LocalContext.current
     val scrollState = rememberScrollState()
@@ -153,6 +154,10 @@ fun AnalyzerScreen(
             }
         }
     )
+
+    SingleEventEffect(sideEffectFlow = imageAnalyzerViewModel.errors, collector = { message ->
+        if (message.isNotBlank()){ navigateToError(message) }
+    })
 
     if (isLoading) {
         Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {

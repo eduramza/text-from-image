@@ -5,6 +5,7 @@ import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraphBuilder
@@ -13,12 +14,14 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.eduramza.cameratextconversor.R
 import com.eduramza.cameratextconversor.data.analytics.FirebaseAnalyticsLoggerImpl
+import com.eduramza.cameratextconversor.di.AdMobViewModelFactory
 import com.eduramza.cameratextconversor.domain.usecase.ShouldShowInterstitialAdUseCase
 import com.eduramza.cameratextconversor.presentation.AdmobViewModel
+import com.eduramza.cameratextconversor.presentation.ErrorScreen
 import com.eduramza.cameratextconversor.presentation.analyzer.AnalyzerScreen
 import com.eduramza.cameratextconversor.presentation.camera.CameraScreen
-import com.eduramza.cameratextconversor.di.AdMobViewModelFactory
 import com.eduramza.cameratextconversor.presentation.preview.PreviewImageScreen
 import com.google.accompanist.insets.ProvideWindowInsets
 import java.io.File
@@ -57,6 +60,9 @@ fun SetupNavGraph(
                 admobViewModel.handleInterstitialAd(activity)
                 navController.navigate(AppScreenNavigation.Analyzer.resumeArgs(it))
             },
+            navigateToError = { error ->
+                navController.navigate(AppScreenNavigation.Error.errorArgs(error))
+            },
             outputDirectory = outputDirectory,
             executor = executor
         )
@@ -77,7 +83,14 @@ fun SetupNavGraph(
             navigateToPreview = { list ->
                 setShouldShowActions(false)
                 navController.navigate(AppScreenNavigation.Preview.previewArgs(list))
+            },
+            navigateToError = { message ->
+                navController.navigate(AppScreenNavigation.Error.errorArgs(message))
             }
+        )
+
+        errorRoute(
+            navigateBack = { navController.popBackStack() }
         )
     }
 }
@@ -86,6 +99,7 @@ fun NavGraphBuilder.cameraRoute(
     activity: Activity,
     navigateToPreview: (uri: List<Uri>) -> Unit,
     navigateToAnalyzer: (uri: List<Uri>) -> Unit,
+    navigateToError: (message: String) -> Unit,
     outputDirectory: File,
     executor: ExecutorService,
 ) {
@@ -94,6 +108,7 @@ fun NavGraphBuilder.cameraRoute(
             activity = activity,
             navigateToPreview = navigateToPreview,
             navigateToAnalyzer = navigateToAnalyzer,
+            navigateToError = navigateToError,
             outputDirectory = outputDirectory,
             executor = executor
         )
@@ -103,7 +118,8 @@ fun NavGraphBuilder.cameraRoute(
 
 fun NavGraphBuilder.analyzerRoute(
     navigateToCamera: () -> Unit,
-    navigateToPreview: (uri: List<Uri>) -> Unit
+    navigateToPreview: (uri: List<Uri>) -> Unit,
+    navigateToError: (message: String) -> Unit
 ) {
     composable(
         route = AppScreenNavigation.Analyzer.route,
@@ -121,7 +137,8 @@ fun NavGraphBuilder.analyzerRoute(
                 navigateToPreview = {
                     navigateToPreview(imageUris)
                 },
-                navigateToCamera = navigateToCamera
+                navigateToCamera = navigateToCamera,
+                navigateToError = navigateToError
             )
         }
     }
@@ -145,6 +162,24 @@ fun NavGraphBuilder.previewRoute(
             imageUri = imageUris,
             shouldShowActions = shouldShowActions,
             navigateToAnalyzer = navigateToAnalyzer,
+            navigateBack = navigateBack
+        )
+    }
+}
+
+fun NavGraphBuilder.errorRoute(
+    navigateBack: () -> Unit
+) {
+    composable(
+        route = AppScreenNavigation.Error.route,
+        arguments = listOf(navArgument(ERROR_NAVIGATION_KEY) {
+            type = NavType.StringType
+        })
+    ) { args ->
+        val message = args.arguments?.getString(ERROR_NAVIGATION_KEY)
+            ?: stringResource(id = R.string.error_default)
+        ErrorScreen(
+            errorMessage = message,
             navigateBack = navigateBack
         )
     }

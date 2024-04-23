@@ -68,5 +68,19 @@ class ConstantsAnalytics {
                 const val ITEM_NAME_EDIT_TEXT = "edit_analyzer"
             }
         }
+
+        class Error{
+            companion object{
+                const val SCREEN_NAME = "error_screen"
+                const val AREA = "error"
+
+                const val ID_BACK = "error_button_01"
+                const val ID_TRY_AGAIN = "error_button_02"
+
+
+                const val ITEM_NAME_BACK = "button_back"
+                const val ITEM_NAME_TRY_AGAIN = "button_try_again"
+            }
+        }
     }
 }
