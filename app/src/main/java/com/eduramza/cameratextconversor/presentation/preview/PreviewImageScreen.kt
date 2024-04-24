@@ -32,7 +32,9 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -73,7 +75,7 @@ fun PreviewImageScreen(
     var bitmap by remember { mutableStateOf<List<Bitmap>>(emptyList()) }
     var padding by remember { mutableStateOf(PaddingValues()) }
 
-    var firstVisibleItemIndex by remember { mutableStateOf(0) }
+    var firstVisibleItemIndex by remember { mutableIntStateOf(0) }
     val listState = rememberLazyListState()
 
     val analytics: FirebaseAnalyticsLogger = FirebaseAnalyticsLoggerImpl()
@@ -160,11 +162,13 @@ fun PreviewImageScreen(
             }
 
             if (shouldShowActions) {
-                scope.launch {
-                    analytics.trackScreenView(
-                        screenName = Companion.Preview.SCREEN_NAME,
-                        area = Companion.Preview.AREA
-                    )
+                SideEffect {
+                    scope.launch {
+                        analytics.trackScreenView(
+                            screenName = Companion.Preview.SCREEN_NAME,
+                            area = Companion.Preview.AREA
+                        )
+                    }
                 }
                 Column(
                     modifier = Modifier
@@ -225,11 +229,13 @@ fun PreviewImageScreen(
 
                 }
             } else {
-                scope.launch {
-                    analytics.trackScreenView(
-                        screenName = Companion.Preview.SCREEN_NAME,
-                        area = Companion.Preview.AREA
-                    )
+                SideEffect {
+                    scope.launch {
+                        analytics.trackScreenView(
+                            screenName = Companion.Preview.SCREEN_NAME,
+                            area = Companion.Preview.AREA
+                        )
+                    }
                 }
             }
         }

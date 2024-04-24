@@ -3,8 +3,6 @@ package com.eduramza.cameratextconversor.navigation
 import android.app.Activity
 import android.net.Uri
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -25,7 +23,6 @@ import com.eduramza.cameratextconversor.presentation.camera.CameraScreen
 import com.eduramza.cameratextconversor.presentation.preview.PreviewImageScreen
 import com.google.accompanist.insets.ProvideWindowInsets
 import java.io.File
-import java.util.concurrent.ExecutorService
 
 @Composable
 fun SetupNavGraph(
@@ -33,7 +30,6 @@ fun SetupNavGraph(
     navController: NavHostController,
     outputDirectory: File,
 ) {
-    val (shouldShowActions, setShouldShowActions) = remember { mutableStateOf(false) }
     val factory = AdMobViewModelFactory(
         activity.application,
         ShouldShowInterstitialAdUseCase(),
@@ -52,8 +48,12 @@ fun SetupNavGraph(
             activity = activity,
             navigateToPreview = {
                 admobViewModel.handleInterstitialAd(activity)
-                setShouldShowActions(true)
-                navController.navigate(AppScreenNavigation.Preview.previewArgs(it))
+                navController.navigate(
+                    AppScreenNavigation.Preview.previewArgs(
+                        uri = it,
+                        isShowButtons = true,
+                    )
+                )
             },
             navigateToAnalyzer = {
                 admobViewModel.handleInterstitialAd(activity)
@@ -70,8 +70,7 @@ fun SetupNavGraph(
             },
             navigateBack = {
                 navController.popBackStack()
-            },
-            shouldShowActions
+            }
         )
 
         analyzerRoute(
@@ -79,8 +78,12 @@ fun SetupNavGraph(
                 navController.navigate(AppScreenNavigation.Camera.route)
             },
             navigateToPreview = { list ->
-                setShouldShowActions(false)
-                navController.navigate(AppScreenNavigation.Preview.previewArgs(list))
+                navController.navigate(
+                    AppScreenNavigation.Preview.previewArgs(
+                        list,
+                        isShowButtons = false
+                    )
+                )
             },
             navigateToError = { message ->
                 navController.navigate(AppScreenNavigation.Error.errorArgs(message))
@@ -143,20 +146,22 @@ fun NavGraphBuilder.analyzerRoute(
 fun NavGraphBuilder.previewRoute(
     navigateToAnalyzer: (uri: List<Uri>) -> Unit,
     navigateBack: () -> Unit,
-    shouldShowActions: Boolean,
 ) {
     composable(
         route = AppScreenNavigation.Preview.route,
-        arguments = listOf(navArgument(name = BITMAP_NAVIGATION_KEY) {
-            type = NavType.StringType
-        })
+        arguments = listOf(
+            navArgument(name = BITMAP_NAVIGATION_KEY) { type = NavType.StringType },
+            navArgument(name = PREVIEW_NAVIGATION_KEY) { type = NavType.BoolType }
+        )
     ) { backStackEntry ->
         val imageUriString = backStackEntry.arguments?.getString(BITMAP_NAVIGATION_KEY)
         val imageUris = imageUriString?.split(",")?.map { Uri.parse(it) } ?: emptyList()
+        val isShouldShowButtons =
+            backStackEntry.arguments?.getBoolean(PREVIEW_NAVIGATION_KEY) ?: true
 
         PreviewImageScreen(
             imageUri = imageUris,
-            shouldShowActions = shouldShowActions,
+            shouldShowActions = isShouldShowButtons,
             navigateToAnalyzer = navigateToAnalyzer,
             navigateBack = navigateBack
         )
