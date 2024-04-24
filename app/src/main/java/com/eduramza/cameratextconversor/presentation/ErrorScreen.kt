@@ -11,7 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.Button
+import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -20,6 +20,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -73,11 +74,13 @@ fun ErrorScreen(
             )
         },
     ) { innerPadding ->
-        scope.launch {
-            analytics.trackScreenView(
-                screenName = Error.SCREEN_NAME,
-                area = Error.AREA
-            )
+        SideEffect {
+            scope.launch {
+                analytics.trackScreenView(
+                    screenName = Error.SCREEN_NAME,
+                    area = Error.AREA
+                )
+            }
         }
         Box(
             modifier = Modifier.fillMaxSize(),
@@ -103,7 +106,7 @@ fun ErrorScreen(
                     textAlign = TextAlign.Center
                 )
             }
-            Button(
+            ElevatedButton(
                 modifier = Modifier
                     .fillMaxWidth()
                     .align(Alignment.BottomCenter)
@@ -129,7 +132,7 @@ fun ErrorScreen(
 
 @Preview(showBackground = true)
 @Composable
-fun previewError() {
+fun PreviewError() {
     ErrorScreen(
         errorMessage = "Ops, algo deu errado, tente novamente!"
     ) {
