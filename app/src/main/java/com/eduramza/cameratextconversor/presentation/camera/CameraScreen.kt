@@ -4,6 +4,7 @@ import android.app.Activity
 import android.app.Activity.RESULT_OK
 import android.content.Context
 import android.content.IntentSender
+import android.content.res.Configuration
 import android.net.Uri
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -17,12 +18,14 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eduramza.cameratextconversor.data.analytics.FirebaseAnalyticsLogger
 import com.eduramza.cameratextconversor.data.analytics.FirebaseAnalyticsLoggerImpl
 import com.eduramza.cameratextconversor.di.CameraViewModelFactory
+import com.eduramza.cameratextconversor.presentation.camera.content.CameraContent
 import com.eduramza.cameratextconversor.presentation.camera.viewmodel.CameraControllerImpl
 import com.eduramza.cameratextconversor.presentation.camera.viewmodel.CameraViewModel
 import com.eduramza.cameratextconversor.presentation.camera.viewmodel.NavigateEffect
@@ -34,7 +37,6 @@ import com.google.mlkit.vision.documentscanner.GmsDocumentScannerOptions
 import com.google.mlkit.vision.documentscanner.GmsDocumentScanning
 import com.google.mlkit.vision.documentscanner.GmsDocumentScanningResult
 import java.io.File
-import java.util.concurrent.ExecutorService
 
 @Composable
 fun CameraScreen(
@@ -44,6 +46,9 @@ fun CameraScreen(
     navigateToError: (message: String) -> Unit,
     outputDirectory: File,
 ) {
+    //Screen
+    val configuration = LocalConfiguration.current
+    val orientation = configuration.orientation
 
     //Configure cameraX
     val context = LocalContext.current
@@ -142,8 +147,13 @@ fun CameraScreen(
         showPreviewImageScreen = showPreviewImageScreen,
         showDocumentScanned = showDocumentScanned,
         previewView = previewView,
+        isPortrait = getIfButtonsInTheBottom(orientation),
         onIntentReceived = { cameraViewModel.processIntent(it) }
     )
+}
+
+private fun getIfButtonsInTheBottom(orientation: Int): Boolean {
+    return orientation == Configuration.ORIENTATION_PORTRAIT
 }
 
 @Composable
