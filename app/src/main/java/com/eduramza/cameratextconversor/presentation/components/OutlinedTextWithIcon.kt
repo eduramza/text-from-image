@@ -27,25 +27,18 @@ fun OutlinedTextFieldWithIconButton(
     icon: @Composable () -> Unit,
     onClickIcon: () -> Unit
 ) {
-//    Layout(modifier = modifier.fillMaxWidth()) { measurable, constraints ->
-//        val textFieldPlaceable = measurable[0].measure(constraints.copy(maxWidth = constraints.maxWidth * 8 / 10))  // Give 80% space to the text field
-//        val iconPlaceable = measurable[1].measure(constraints.copy(minWidth = 0)) // Remaining space for the icon button
-//
-//        layout(width = constraints.maxWidth, height = textFieldPlaceable.height) {
-//            textFieldPlaceable.placeRelative(0, 0)
-//            iconPlaceable.placeRelative(x = textFieldPlaceable.width, y = 0)
-//        }
-//    }
     Box{
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
             label = label,
-            modifier = modifier // Match the width assigned within the layout
+            modifier = modifier
         )
         IconButton(
             onClick = { onClickIcon() },
-            modifier = Modifier.align(Alignment.BottomEnd).padding(end = 16.dp, bottom = 8.dp)
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(end = 16.dp, bottom = 8.dp)
         ) {
             icon()
         }
@@ -54,7 +47,7 @@ fun OutlinedTextFieldWithIconButton(
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
-fun previewOutlined() {
+fun PreviewOutlined() {
     var value = ""
     OutlinedTextFieldWithIconButton(value = value,
         onValueChange = { value = it  },

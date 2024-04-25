@@ -127,7 +127,7 @@ fun PreviewImageScreen(
                     }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
+                            contentDescription = stringResource(id = R.string.content_description_back_button),
                             tint = MaterialTheme.colorScheme.primary
                         )
                     }
@@ -252,7 +252,7 @@ fun launchCropActivity(
 
 @Preview(showBackground = true, showSystemUi = true, uiMode = Configuration.UI_MODE_NIGHT_NO)
 @Composable
-fun previewEditImageScreen() {
+fun PreviewEditImageScreen() {
     PreviewImageScreen(
         imageUri = listOf(Uri.parse("")),
         shouldShowActions = false,

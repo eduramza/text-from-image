@@ -44,7 +44,7 @@ fun RoundedIconButton(
 
 @Preview
 @Composable
-fun previewRoundedIconButton() {
+fun PreviewRoundedIconButton() {
     RoundedIconButton(
         color = MaterialTheme.colorScheme.onPrimary,
         icon = Icons.Default.Camera,

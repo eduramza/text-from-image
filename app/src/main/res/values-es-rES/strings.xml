@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Text Scan</string>
+    <string name="crop_dialog_title">¿Desea recortar la imagen?</string>
+    <string name="crop_dialog_confirm">Recortar</string>
+    <string name="not_need_text">No es necesario</string>
+
+    <string name="button_copy_clipboard">Copiar texto</string>
+    <string name="button_share_content">Compartir texto</string>
+    <string name="success_copy_info">¡Texto copiado!</string>
+    <string name="label_analyzed_text_field">Texto extraído de la imagen</string>
+    <string name="button_crop_image">Recortar imagen</string>
+    <string name="button_analyzer_image">Analizar imagen</string>
+    <string name="snackbar_file_saved">¿Desea ver el archivo guardado?</string>
+    <string name="snackbar_open_action">Abrir</string>
+
+    <string name="analyzed_image_output_header">%s *** Imagen %d *** \n\n%s\n\n</string>
+
+    <string name="title_preview">Imágenes capturadas</string>
+    <string name="menu_save_pdf">PDF</string>
+    <string name="menu_save_docx">Docx</string>
+    <string name="menu_save_txt">txt</string>
+
+    <string name="camera_screen_document">Escanear \nDocumentos</string>
+    <string name="error_something_went_wrong">¡Lo sentimos, algo salió mal! %s</string>
+    <string name="error_default">Lo sentimos, estamos teniendo problemas con eso. Por favor, inténtelo de nuevo.</string>
+    <string name="error_save_file">No se pudo guardar el archivo. Por favor, inténtelo de nuevo.</string>
+    <string name="error_cant_open_scanner">No se pudo abrir el escáner. ¡Actualice su Play Store e inténtelo de nuevo!</string>
+    <string name="button_try_again">Intentar nuevamente</string>
+
+    <string name="content_description_back_button">Atrás</string>
+    <string name="content_description_image_captured">Imagen capturada</string>
+    <string name="content_description_switch_camera">Cambiar cámara</string>
+    <string name="content_description_take_photo">Tomar foto</string>
+    <string name="content_description_download_text">Descargar texto</string>
+    <string name="content_description_preview_image">Vista previa de la imagen</string>
+    <string name="content_description_share_content">Compartir contenido</string>
+</resources>
