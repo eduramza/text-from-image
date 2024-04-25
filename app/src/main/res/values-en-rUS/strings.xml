@@ -1,5 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name" translatable="false">Text Scan</string>
+    <string name="app_name">Text Scan</string>
     <string name="crop_dialog_title">Would you like to crop the image?</string>
     <string name="crop_dialog_confirm">Crop</string>
     <string name="not_need_text">No thanks</string>

@@ -66,7 +66,7 @@ fun ErrorScreen(
                         }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
+                            contentDescription = stringResource(id = R.string.content_description_back_button),
                             tint = MaterialTheme.colorScheme.primary
                         )
                     }

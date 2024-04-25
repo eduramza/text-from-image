@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.eduramza.cameratextconversor.R
 import com.eduramza.cameratextconversor.data.analytics.ConstantsAnalytics
+import com.eduramza.cameratextconversor.data.analytics.ConstantsAnalytics.Companion.Analyzer
 import com.eduramza.cameratextconversor.data.analytics.FirebaseAnalyticsLogger
 import com.eduramza.cameratextconversor.utils.FileManager
 import com.eduramza.cameratextconversor.utils.StringProvider
@@ -17,7 +18,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import com.eduramza.cameratextconversor.data.analytics.ConstantsAnalytics.Companion.Analyzer
 
 class ImageAnalyzerViewModel(
     private val fileManager: FileManager,
@@ -174,7 +174,11 @@ class ImageAnalyzerViewModel(
         if (listSize > 1) {
             imageIndex++
             val actual = textAnalyzed.value
-            textAnalyzed.value = "$actual*** Imagem $imageIndex *** \n\n$analyzed\n\n"
+            val output = stringProvider.getStringWithArgs(
+                R.string.analyzed_image_output_header,
+                args = arrayOf(actual, imageIndex, analyzed)
+            )
+            textAnalyzed.value = output
         } else {
             textAnalyzed.value = textAnalyzed.value + analyzed
         }

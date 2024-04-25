@@ -82,7 +82,7 @@ fun AnalyzerContent(
                     IconButton(onClick = { onIntentReceiver(AnalyzerIntent.NavigateToCamera) }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
+                            contentDescription = stringResource(id = R.string.content_description_back_button),
                             tint = MaterialTheme.colorScheme.primary
                         )
                     }
@@ -99,7 +99,7 @@ fun AnalyzerContent(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Share,
-                            contentDescription = "Share Content",
+                            contentDescription = stringResource(id = R.string.content_description_share_content),
                         )
                     }
                     IconButton(
@@ -109,7 +109,7 @@ fun AnalyzerContent(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Photo,
-                            contentDescription = "Preview Image",
+                            contentDescription = stringResource(id = R.string.content_description_preview_image),
                         )
                     }
 
@@ -119,7 +119,7 @@ fun AnalyzerContent(
                     ) {
                         Icon(
                             imageVector = Icons.Default.FileDownload,
-                            contentDescription = "Download Text"
+                            contentDescription = stringResource(id = R.string.content_description_download_text)
                         )
                     }
                     Box(
@@ -158,7 +158,7 @@ fun AnalyzerContent(
                     ) {
                         Icon(
                             imageVector = Icons.Default.PhotoCamera,
-                            contentDescription = "Take New Photo"
+                            contentDescription = stringResource(id = R.string.content_description_take_photo)
                         )
                     }
                 },
