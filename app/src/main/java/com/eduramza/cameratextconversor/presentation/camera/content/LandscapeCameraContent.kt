@@ -61,12 +61,12 @@ fun LandscapeCameraContent(
                 ) {
                     Icon(
                         imageVector = Icons.Default.PhotoLibrary,
-                        contentDescription = "Open gallery",
+                        contentDescription = stringResource(id = R.string.gallery),
                         tint = MaterialTheme.colorScheme.onPrimary
                     )
                 }
                 Text(
-                    text = "Gallery",
+                    text = stringResource(id = R.string.gallery),
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onPrimary
                 )
@@ -90,7 +90,7 @@ fun LandscapeCameraContent(
                 ) {
                     Icon(
                         imageVector = Icons.Default.DocumentScanner,
-                        contentDescription = "Scan Document",
+                        contentDescription = stringResource(id = R.string.camera_screen_document),
                         tint = MaterialTheme.colorScheme.onPrimary
                     )
                 }

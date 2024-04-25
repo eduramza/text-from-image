@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Text Scan</string>
+    <string name="app_name">Image Text Converter</string>
     <string name="crop_dialog_title">Would you like to crop the image?</string>
     <string name="crop_dialog_confirm">Crop</string>
     <string name="not_need_text">No thanks</string>
@@ -17,6 +17,7 @@
     <string name="analyzed_image_output_header">%s *** Image %d *** \n\n%s\n\n</string>
 
     <string name="title_preview">Captured Images</string>
+    <string name="gallery">Gallery</string>
     <string name="menu_save_pdf">PDF</string>
     <string name="menu_save_docx">Docx</string>
     <string name="menu_save_txt">txt</string>
