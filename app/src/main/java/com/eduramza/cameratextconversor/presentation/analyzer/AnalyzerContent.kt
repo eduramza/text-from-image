@@ -202,7 +202,8 @@ fun AnalyzerContent(
                         modifier = Modifier
                             .align(Alignment.BottomCenter)
                             .fillMaxWidth()
-                            .padding(bottom = innerPadding.calculateBottomPadding())
+                            .padding(bottom = innerPadding.calculateBottomPadding()),
+                        interstitialAd = stringResource(R.string.INTERSTITIAL_AD_ID)
                     )
                 }
             }

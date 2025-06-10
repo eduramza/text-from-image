@@ -23,12 +23,22 @@ android {
     }
 
     buildTypes {
-        release {
-            isMinifyEnabled = false
+        getByName("release") {
+            isMinifyEnabled = true // Recomendado para produção
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+
+            resValue("string", "INTERSTITIAL_AD_ID", "\"ca-app-pub-8606072529117264/8888221640\"")
+            signingConfig = signingConfigs.getByName("debug")
+        }
+
+        getByName("debug") {
+
+            resValue("string", "INTERSTITIAL_AD_ID", "\"ca-app-pub-3940256099942544/1033173712\"")
+            applicationIdSuffix = ".debug"
+            isDebuggable = true
         }
     }
     compileOptions {
@@ -76,7 +86,7 @@ dependencies {
     implementation("androidx.test:core-ktx:1.5.0")
 
     //CameraX
-    val camerax_version  = "1.3.1"
+    val camerax_version  = "1.4.2"
     implementation("androidx.camera:camera-core:${camerax_version}")
     implementation("androidx.camera:camera-camera2:${camerax_version}")
     implementation("androidx.camera:camera-lifecycle:${camerax_version}")
@@ -84,7 +94,7 @@ dependencies {
     implementation("androidx.camera:camera-extensions:${camerax_version}")
 
     //ML Kit
-    implementation("com.google.mlkit:text-recognition:16.0.0")
+    implementation("com.google.mlkit:text-recognition:16.0.1")
 
     //Easy Crop
     implementation("com.vanniktech:android-image-cropper:4.5.0")

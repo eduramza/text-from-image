@@ -5,6 +5,7 @@ import android.app.Application
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.eduramza.cameratextconversor.R
 import com.eduramza.cameratextconversor.data.analytics.FirebaseAnalyticsLogger
 import com.eduramza.cameratextconversor.data.analytics.ConstantsAnalytics
 import com.eduramza.cameratextconversor.data.analytics.ConstantsAnalytics.Companion.CONTENT_ADMOB
@@ -30,13 +31,13 @@ class AdmobViewModel(
 
     init {
         MobileAds.initialize(application) {}
-        loadInterstitialAd()
+        loadInterstitialAd(application.getString(R.string.INTERSTITIAL_AD_ID))
     }
 
-    private fun loadInterstitialAd() {
+    private fun loadInterstitialAd(interestAd: String) {
         InterstitialAd.load(
             application,
-            TEST_INSTERSTICIAL,
+            interestAd,
             adRequest,
             object : InterstitialAdLoadCallback() {
                 override fun onAdFailedToLoad(p0: LoadAdError) {
@@ -63,13 +64,8 @@ class AdmobViewModel(
                     contentType = CONTENT_ADMOB,
                     area = ConstantsAnalytics.Companion.Camera.AREA
                 )
-                loadInterstitialAd()
+                loadInterstitialAd(application.getString(R.string.INTERSTITIAL_AD_ID))
             }
         }
-    }
-
-    companion object {
-        private const val TEST_INSTERSTICIAL = "ca-app-pub-3940256099942544/1033173712"
-        private const val PROD_INSTERSTICIAL = "ca-app-pub-8606072529117264/8888221640"
     }
 }
