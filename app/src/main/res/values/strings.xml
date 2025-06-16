@@ -9,7 +9,7 @@
     <string name="success_copy_info">Text copied!</string>
     <string name="label_analyzed_text_field">Text extracted from image</string>
     <string name="button_crop_image">Crop Image</string>
-    <string name="button_analyzer_image">Analyze Image</string>
+    <string name="button_analyzer_image">Extract Text</string>
     <string name="snackbar_file_saved">Would you like to view the saved file?</string>
     <string name="snackbar_open_action">Open</string>
 

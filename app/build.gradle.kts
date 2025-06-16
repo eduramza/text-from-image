@@ -31,12 +31,14 @@ android {
             )
 
             resValue("string", "INTERSTITIAL_AD_ID", "\"ca-app-pub-8606072529117264/8888221640\"")
+            resValue("string", "BANNER_AD_ID", "\"ca-app-pub-8606072529117264/6070486610\"")
             signingConfig = signingConfigs.getByName("debug")
         }
 
         getByName("debug") {
 
             resValue("string", "INTERSTITIAL_AD_ID", "\"ca-app-pub-3940256099942544/1033173712\"")
+            resValue("string", "BANNER_AD_ID", "\"ca-app-pub-3940256099942544/1033173712\"")
             applicationIdSuffix = ".debug"
             isDebuggable = true
         }

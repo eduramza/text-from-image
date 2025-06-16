@@ -10,7 +10,7 @@
     <string name="success_copy_info">¡Texto copiado!</string>
     <string name="label_analyzed_text_field">Texto extraído de la imagen</string>
     <string name="button_crop_image">Recortar imagen</string>
-    <string name="button_analyzer_image">Analizar imagen</string>
+    <string name="button_analyzer_image">Extraer texto</string>
     <string name="snackbar_file_saved">¿Desea ver el archivo guardado?</string>
     <string name="snackbar_open_action">Abrir</string>
 

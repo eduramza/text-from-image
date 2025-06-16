@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.net.Uri
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,16 +19,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -42,7 +45,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -147,14 +149,14 @@ fun PreviewImageScreen(
                 state = listState,
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier
-                    .fillMaxWidth()
+                    .fillMaxSize()
                     .background(color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.6f)),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 itemsIndexed(imageUri) { _, item: Uri ->
                     AsyncImage(
                         model = item,
-                        contentDescription = null,
+                        contentDescription = "Preview Image",
                         contentScale = ContentScale.FillWidth,
                         modifier = Modifier.padding(8.dp)
                     )
@@ -170,40 +172,16 @@ fun PreviewImageScreen(
                         )
                     }
                 }
+
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color.White)
                         .align(Alignment.BottomCenter)
-                        .height(100.dp)
+                        .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.95f))
+                        .padding(horizontal = 16.dp, vertical = 20.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    TextButton(
-                        onClick = {
-                            scope.launch {
-                                analytics.trackSelectContent(
-                                    id = Companion.Preview.ID_CROP,
-                                    itemName = Companion.Preview.ITEM_NAME_CROP,
-                                    contentType = CONTENT_BUTTON,
-                                    area = Companion.Preview.AREA
-                                )
-                            }
-                            launchCropActivity(
-                                imageUri[firstVisibleItemIndex],
-                                cropActivityResultLauncher
-                            )
-                        },
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .weight(1f)
-                            .background(color = MaterialTheme.colorScheme.scrim.copy(alpha = 0.45f))
-                    ) {
-                        Text(
-                            text = stringResource(id = R.string.button_crop_image),
-                            color = MaterialTheme.colorScheme.onPrimary,
-                            fontSize = MaterialTheme.typography.titleLarge.fontSize
-                        )
-                    }
-
                     Button(
                         onClick = {
                             scope.launch {
@@ -217,17 +195,53 @@ fun PreviewImageScreen(
                             navigateToAnalyzer(imageUri)
                         },
                         modifier = Modifier
-                            .fillMaxSize()
-                            .weight(1f)
-                            .background(color = MaterialTheme.colorScheme.primary)
+                            .fillMaxWidth()
+                            .height(50.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        )
                     ) {
                         Text(
                             text = stringResource(id = R.string.button_analyzer_image),
-                            fontSize = MaterialTheme.typography.titleMedium.fontSize
+                            style = MaterialTheme.typography.titleMedium
                         )
                     }
 
+                    OutlinedButton(
+                        onClick = {
+                            scope.launch {
+                                analytics.trackSelectContent(
+                                    id = Companion.Preview.ID_CROP,
+                                    itemName = Companion.Preview.ITEM_NAME_CROP,
+                                    contentType = CONTENT_BUTTON,
+                                    area = Companion.Preview.AREA
+                                )
+                            }
+                            if (imageUri.isNotEmpty()) {
+                                launchCropActivity(
+                                    imageUri[firstVisibleItemIndex],
+                                    cropActivityResultLauncher
+                                )
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = MaterialTheme.colorScheme.primary
+                        )
+                    ) {
+                        Text(
+                            text = stringResource(id = R.string.button_crop_image),
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                    }
                 }
+
             } else {
                 SideEffect {
                     scope.launch {
